@@ -3,10 +3,10 @@ import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import argparse
-from utils import mix_data
-from models.gaussian1D import Gaussian_Estimator_1D
-from models.gmm1D import Gaussian_Mixture_Model_1D
-from models.gmm import Gaussian_Mixture_Model
+from perfgen.utils import mix_data
+from perfgen.models.gaussian1D import Gaussian_Estimator_1D
+from perfgen.models.gmm1D import Gaussian_Mixture_Model_1D
+from perfgen.models.gmm import Gaussian_Mixture_Model
 from datasets import two_moons_dataset
 
 class Performative_Generator():
@@ -46,8 +46,8 @@ class Performative_Generator():
         self.epochs_schedule = epochs_schedule
         self.eval_schedule = eval_schedule
         self.eval_data = eval_data
-    
-    
+
+
     def train(self):
         metrics = {}
         metrics['indices'] = self.eval_schedule
@@ -79,9 +79,9 @@ class Performative_Generator():
                     else:
                         for keys in new_metrics.keys():
                             metrics["eval"+str(keys)] = np.concatenate([metrics["eval"+keys], np.array([new_metrics[keys]])])
-                    
+
         return metrics
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Performative Generator')
@@ -98,12 +98,12 @@ if __name__ == "__main__":
     elif args.data == 'moons':
         data = two_moons_dataset(nb_samples=nb_samples, noise=.1)
         dim=2
-    
+
     if args.model == 'gmm':
         model = Gaussian_Mixture_Model(nb=3, dim=dim)
     else:
         raise NotImplementedError
-    
+
     nb_iters = args.nb_iters
     prop_old_schedule = np.array([1.] + [0] * nb_iters)
     # prop_old_schedule = np.ones(nb_iters)

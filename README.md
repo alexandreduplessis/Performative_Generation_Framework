@@ -1,10 +1,4 @@
 # Performative Generation
-TODO
 
-_Requirements:_
-- `numpy`
-- `torch`
-- `matplotlib`
-- `ot`
-- `sklearn`
-- `tqdm`
+To install the package, run
+'pip install -e .'

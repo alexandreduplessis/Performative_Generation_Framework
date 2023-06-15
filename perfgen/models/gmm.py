@@ -1,8 +1,6 @@
 import numpy as np
 from sklearn.mixture import GaussianMixture
-import sys
-sys.path.append('../')
-from utils import wasserstein_distance
+from perfgen.utils import wasserstein_distance
 
 
 class Gaussian_Mixture_Model():
@@ -17,7 +15,7 @@ class Gaussian_Mixture_Model():
         Standard deviations of the Gaussians
     weights : array
         Weights of the Gaussians
-    
+
     Methods
     -------
     train(data, epochs)
@@ -36,7 +34,7 @@ class Gaussian_Mixture_Model():
             sigmas = np.ones((nb, dim, dim))
         if weights is None:
             weights = np.array([1/nb]*nb)
-        
+
         self.nb = nb
         self.dim = dim
         self.mus = mus
@@ -46,7 +44,7 @@ class Gaussian_Mixture_Model():
         self.name = f'{self.dim}D Gaussian Mixture Model'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance'}
-        
+
     def train(self, data, epochs):
         self.losses = []
         for epoch in range(epochs):
@@ -58,7 +56,7 @@ class Gaussian_Mixture_Model():
             self.losses.append(-1.)
         self.losses = np.array(self.losses)
         return self.losses
-    
+
     def generate(self, nb_samples):
         samples = []
         for _ in range(nb_samples):
@@ -67,7 +65,7 @@ class Gaussian_Mixture_Model():
             samples.append(new_sample)
         samples = np.array(samples)
         return samples
-    
+
     def eval(self, data, **kwargs):
         metrics = {}
         # compute the std and mean of the data, taking weights into account
