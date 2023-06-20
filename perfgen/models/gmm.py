@@ -63,6 +63,9 @@ class Gaussian_Mixture_Model():
         self.losses = np.array(self.losses)
         return self.losses
 
+    def get_theta(self):
+        return {'mus': self.mus, 'sigmas': self.sigmas, 'weights': self.weights}
+
     def generate(self, nb_samples):
         samples = []
         for _ in range(nb_samples):
@@ -81,3 +84,17 @@ class Gaussian_Mixture_Model():
         metrics['std'] = np.linalg.norm(model_std)
         metrics['wasserstein'] = wasserstein_distance(data, data_gen)
         return metrics
+
+    def score_samples(self, data):
+        scores = []
+        for sample in data:
+            score = 0
+            for i in range(self.nb):
+                score += self.weights[i] * np.exp(-0.5 * np.dot(np.dot((sample - self.mus[i]), np.linalg.inv(self.sigmas[i])), (sample - self.mus[i]).T))
+            scores.append(score)
+        return np.array(scores)
+    
+    def load(self, theta):
+        self.mus = theta['mus']
+        self.sigmas = theta['sigmas']
+        self.weights = theta['weights']

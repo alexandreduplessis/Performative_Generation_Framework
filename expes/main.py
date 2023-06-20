@@ -26,8 +26,12 @@ if __name__ == "__main__":
     nb_samples = args.nb_samples
 
     rng = check_random_state(0)
+
     data = sample_2d_data(args.data, nb_samples, rng)
-    model = Gaussian_Mixture_Model(nb=8, dim=2, rng=rng)
+    if args.model == 'gmm':
+        model = Gaussian_Mixture_Model(nb=8, dim=2, rng=rng)
+    else:
+        raise NotImplementedError
 
     nb_iters = args.nb_iters
     prop_old_schedule = np.array([1.] + [args.prop_old] * nb_iters)
@@ -36,7 +40,7 @@ if __name__ == "__main__":
     eval_schedule = np.arange(0, nb_iters, 1)
 
     performative_generator = Performative_Generator(model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule)
-    metrics = performative_generator.train()
+    metrics, theta_list = performative_generator.train()
 
     keys = list(metrics.keys())
     keys.remove('indices')
@@ -45,8 +49,27 @@ if __name__ == "__main__":
     nb_plots = len(keys)
 
     # make subplots
-    fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
-    for i, key in enumerate(keys):
-        axs[i].plot(metrics['indices'], metrics[key])
-        axs[i].set_title(f"{keys_names[key]} for {model.name}")
-    plt.show()
+    # fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
+    # for i, key in enumerate(keys):
+    #     axs[i].plot(metrics['indices'], metrics[key])
+    #     axs[i].set_title(f"{keys_names[key]} for {model.name}")
+    # plt.show()
+
+    if len(theta_list.keys()) > 0:
+        nb_plots = 10
+        fig, axs = plt.subplots(1, nb_plots, figsize=(20, 3))
+        keys = list(theta_list.keys())
+        plot_keys = keys[::len(keys) // nb_plots]
+        if len(plot_keys) > nb_plots:
+            plot_keys = plot_keys[:nb_plots]
+        for plot_id in range(nb_plots):
+            key = keys[plot_keys[plot_id]]
+            all = theta_list[key]
+            model = Gaussian_Mixture_Model(nb=8, dim=2)
+            model.load(all)
+            X, Y = np.meshgrid(np.linspace(-6, 6), np.linspace(-6,6))
+            XX = np.array([X.ravel(), Y.ravel()]).T
+            Z = model.score_samples(XX)
+            Z = Z.reshape((50,50))
+            axs[plot_id].contour(X, Y, Z)
+        plt.show()

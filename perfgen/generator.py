@@ -44,6 +44,7 @@ class Performative_Generator():
     def train(self):
         metrics = {}
         metrics['indices'] = self.eval_schedule
+        theta = {}
         for i in tqdm(range(self.nb_iters)):
             # Generate data to train
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
@@ -55,6 +56,7 @@ class Performative_Generator():
             losses = self.model.train(data_to_train, self.epochs_schedule[i])
 
             if i in self.eval_schedule:
+                theta[i] = self.model.get_theta()
                 # Evaluate on old_data
                 new_metrics = self.model.eval(self.old_data)
                 if i == self.eval_schedule[0]:
@@ -73,4 +75,4 @@ class Performative_Generator():
                         for keys in new_metrics.keys():
                             metrics["eval"+str(keys)] = np.concatenate([metrics["eval"+keys], np.array([new_metrics[keys]])])
 
-        return metrics
+        return metrics, theta
