@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.mixture import GaussianMixture
+from sklearn.utils import check_random_state
 from perfgen.utils import wasserstein_distance
 
 
@@ -27,7 +28,9 @@ class Gaussian_Mixture_Model():
         Evaluate the model on data with given metrics
         Returns a dictionnary of metrics
     """
-    def __init__(self, nb=3, dim=1, mus=None, sigmas=None, weights=None):
+    def __init__(
+            self, nb=3, dim=1, rng=check_random_state(0),mus=None,
+            sigmas=None, weights=None):
         if mus is None:
             mus = np.array([range(nb)]*dim).reshape(nb, dim)
         if sigmas is None:
@@ -37,6 +40,7 @@ class Gaussian_Mixture_Model():
 
         self.nb = nb
         self.dim = dim
+        self.rng = rng
         self.mus = mus
         self.sigmas = sigmas
         self.weights = weights
@@ -48,7 +52,9 @@ class Gaussian_Mixture_Model():
     def train(self, data, epochs):
         self.losses = []
         for epoch in range(epochs):
-            gmm = GaussianMixture(n_components=self.nb, covariance_type='full')
+            gmm = GaussianMixture(
+                n_components=self.nb, covariance_type='full',
+                random_state=self.rng)
             gmm.fit(data)
             self.mus = gmm.means_
             self.sigmas = gmm.covariances_
@@ -60,8 +66,8 @@ class Gaussian_Mixture_Model():
     def generate(self, nb_samples):
         samples = []
         for _ in range(nb_samples):
-            i = np.random.choice(self.nb, p=self.weights)
-            new_sample = np.random.multivariate_normal(self.mus[i], self.sigmas[i])
+            i = self.rng.choice(self.nb, p=self.weights)
+            new_sample = self.rng.multivariate_normal(self.mus[i], self.sigmas[i])
             samples.append(new_sample)
         samples = np.array(samples)
         return samples

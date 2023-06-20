@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 import ot
+from sklearn.utils import check_random_state
 
-
-def mix_data(data1, data2):
+def mix_data(data1, data2, random_state=0):
     """
     Mix two datasets
 
@@ -13,15 +13,16 @@ def mix_data(data1, data2):
         First dataset
     data2 : Numpy array or Torch tensor
         Second dataset
-    
+
     Returns
     -------
     data : Numpy array or Torch tensor
         Mixed dataset (if both datasets are of the same type, this type is preserved, otherwise it is a Torch tensor)
     """
+    rng = check_random_state(random_state)
     if isinstance(data1, np.ndarray) and isinstance(data2, np.ndarray):
         data = np.concatenate([data1, data2], axis=0)
-        np.random.shuffle(data)
+        rng.shuffle(data)
     elif isinstance(data1, torch.Tensor) and isinstance(data2, torch.Tensor):
         data = torch.cat([data1, data2], axis=0)
         data = data[torch.randperm(data.size()[0])]

@@ -3,6 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import argparse
+from sklearn.utils import check_random_state
 from perfgen.models.gaussian1D import Gaussian_Estimator_1D
 from perfgen.models.gmm1D import Gaussian_Mixture_Model_1D
 from perfgen.models.gmm import Gaussian_Mixture_Model
@@ -23,9 +24,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     nb_samples = args.nb_samples
-    
-    data = sample_2d_data(args.data, nb_samples)
-    model = Gaussian_Mixture_Model(nb=8, dim=2)
+
+    rng = check_random_state(0)
+    data = sample_2d_data(args.data, nb_samples, rng)
+    model = Gaussian_Mixture_Model(nb=8, dim=2, rng=rng)
 
     nb_iters = args.nb_iters
     prop_old_schedule = np.array([1.] + [args.prop_old] * nb_iters)

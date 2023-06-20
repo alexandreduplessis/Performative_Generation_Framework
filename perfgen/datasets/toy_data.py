@@ -2,6 +2,7 @@ import torch
 import sklearn.datasets
 import math
 import numpy as np
+from sklearn.utils import check_random_state
 
 # --------------------
 # Data
@@ -33,9 +34,7 @@ def potential_fn(dataset):
     else:
         raise RuntimeError('Invalid potential name to sample from.')
 
-def sample_2d_data(dataset, n_samples):
-
-    # z = torch.randn(n_samples, 2)
+def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
 
     if dataset == "8gaussians":
         scale = 4.
@@ -46,8 +45,8 @@ def sample_2d_data(dataset, n_samples):
 
         dataset = []
         for i in range(n_samples):
-            point = np.random.randn(2) * 0.5
-            idx = np.random.randint(8)
+            point = rng.randn(2) * 0.5
+            idx = rng.randint(8)
             center = centers[idx]
             point[0] += center[0]
             point[1] += center[1]
@@ -55,8 +54,6 @@ def sample_2d_data(dataset, n_samples):
         dataset = np.array(dataset, dtype="float32")
         dataset /= 1.414
         return dataset
-        # return torch.from_numpy(dataset).type(torch.float32)
-        # return sq2 * (0.5 * z + centers[torch.randint(len(centers), size=(n_samples,))])
 
     elif dataset == '2spirals':
         n = torch.sqrt(torch.rand(n_samples // 2)) * 540 * (2 * math.pi) / 360
