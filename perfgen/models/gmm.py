@@ -70,11 +70,8 @@ class Gaussian_Mixture_Model():
         metrics = {}
         # compute the std and mean of the data, taking weights into account
         data_gen = self.generate(len(data))
-        data_mean = np.mean(data, axis=0)
         data_std = np.std(data, axis=0)
-        model_mean = np.mean(data_gen, axis=0)
         model_std = np.std(data_gen, axis=0)
-        metrics['mean'] = np.linalg.norm(data_mean - model_mean)
-        metrics['std'] = np.linalg.norm(data_std - model_std)
+        metrics['std'] = np.linalg.norm(model_std)
         metrics['wasserstein'] = wasserstein_distance(data, data_gen)
         return metrics
