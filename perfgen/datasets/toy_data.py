@@ -7,6 +7,7 @@ import numpy as np
 # Data
 # --------------------
 
+# TODO clarify why is this useful for
 def potential_fn(dataset):
     # NF paper table 1 energy functions
     w1 = lambda z: torch.sin(2 * math.pi * z[:,0] / 4)

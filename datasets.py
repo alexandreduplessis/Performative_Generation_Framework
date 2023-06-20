@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.datasets import make_moons
 
+# TODO recode and integrate two moons in toy_data
 def two_moons_dataset(nb_samples=1000, noise=0.1):
     """
     Generate the two moons dataset
