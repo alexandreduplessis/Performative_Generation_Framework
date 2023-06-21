@@ -4,9 +4,10 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 from perfgen.argparse import my_parser
 from perfgen.models.gmm import Gaussian_Mixture_Model
+from tqdm import tqdm
 
-LOW = -8
-HIGH = 8
+LOW = -4
+HIGH = 4
 
 def plt_density(
         model, ax, npts=100, memory=100, title="$q(x)$", device="cpu"):
@@ -29,13 +30,16 @@ args = my_parser()
 model = Gaussian_Mixture_Model()
 # TODO modify format, no more npy
 
-n_plots = 5  # TODO read automatically
+
+n_plots = 10  # TODO read automatically
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
 
-for idx_arr, idx_checkpoint in enumerate(
-        np.arange(n_plots) * args.checkpoint_freq):
+for idx_arr, idx_checkpoint in enumerate(tqdm(
+        np.arange(n_plots) * args.checkpoint_freq)):
     model.load(args.path + '/' + "model_" + str(idx_checkpoint) + '.npy')
-
     plt_density(model, axs[idx_arr])
+    axs[idx_arr].set_title("Epoch " + str(idx_checkpoint))
+
+fig.title("GMM density on 8 gaussians")
 
 plt.show()

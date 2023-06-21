@@ -97,7 +97,7 @@ class Gaussian_Mixture_Model():
             score = 0
             for i in range(self.n_gaussians):
                 score += self.weights[i] * np.exp(-0.5 * np.dot(np.dot((sample - self.mus[i]), np.linalg.inv(self.sigmas[i])), (sample - self.mus[i]).T))
-            scores.append(score)
+            scores.append(np.log(score))
         return torch.tensor(scores)
 
     def load(self, path):
@@ -105,7 +105,7 @@ class Gaussian_Mixture_Model():
         self.mus = theta['mus']
         self.sigmas = theta['sigmas']
         self.weights = theta['weights']
-        self.n_gaussians_gaussians, self.dim = self.mus.shape  # TODO to be fixed
+        self.n_gaussians, self.dim = self.mus.shape  # TODO to be fixed
 
     def save_model(self, path):
         np.save(path, self.get_theta())
