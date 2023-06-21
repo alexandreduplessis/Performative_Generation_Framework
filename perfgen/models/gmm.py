@@ -89,14 +89,16 @@ class Gaussian_Mixture_Model():
         metrics['wasserstein'] = wasserstein_distance(data, data_gen)
         return metrics
 
-    def score_samples(self, data):
+    def log_prob(self, data):
+        # check the dimension of the data
+        assert data.shape[1] == self.dim
         scores = []
         for sample in data:
             score = 0
             for i in range(self.nb):
                 score += self.weights[i] * np.exp(-0.5 * np.dot(np.dot((sample - self.mus[i]), np.linalg.inv(self.sigmas[i])), (sample - self.mus[i]).T))
             scores.append(score)
-        return np.array(scores)
+        return torch.tensor(scores)
     
     def load(self, path):
         theta = np.load(path, allow_pickle=True).item()
