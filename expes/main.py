@@ -55,11 +55,11 @@ if __name__ == "__main__":
     performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.exp_name)
     metrics, theta_list = performative_generator.train()
 
-    keys = list(metrics.keys())
-    keys.remove('indices')
-    keys_names = model.metrics_titles
+    # keys = list(metrics.keys())
+    # keys.remove('indices')
+    # keys_names = model.metrics_titles
 
-    nb_plots = len(keys)
+    # nb_plots = len(keys)
 
     # make subplots
     # fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
