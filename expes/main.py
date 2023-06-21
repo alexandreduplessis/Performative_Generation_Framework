@@ -11,37 +11,25 @@ from perfgen.models.gmm1D import Gaussian_Mixture_Model_1D
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.generator import Performative_Generator
 from perfgen.datasets.toy_data import sample_2d_data
-
+from perfgen.argparse import my_parser
 
 
 if __name__ == "__main__":
     date_str = time.strftime("%Y%m%d-%H%M%S")
-
-    parser = argparse.ArgumentParser(description='Performative Generator')
-    parser.add_argument('--model', type=str, default='gmm', help='Model to train and generate data')
-    parser.add_argument('--nb_iters', type=int, default=200, help='Number of iterations') # Warning: small values of nb_iters can be highly misleading when reading the results
-    parser.add_argument('--nb_samples', type=int, default=100, help='Number of samples')
-    parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
-    parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
-    parser.add_argument('--nb_new', type=int, default=100, help='Number of new datapoints to generate')
-    parser.add_argument('--checkpoint_freq', type=int, default=10, help='Frequency of checkpoints')
-    parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
-    parser.add_argument('--exp_name', type=str, default="", help='Name of the experiment')
-
-    args = parser.parse_args()
+    args = my_parser()
     nb_samples = args.nb_samples
 
     rng = check_random_state(0)
-    if args.exp_name == "":
-        exp_name = args.model + '/' + args.data + '/' + date_str
-    else:
-        exp_name = args.exp_name
+    # if args.path == "":
+    #     exp_name = args.model + '/' + args.data + '/' + date_str
+    # else:
+    #     exp_name = args.path
     # create folder in ./checkpoints
-    if not os.path.exists('./checkpoints'):
-        os.mkdir('./checkpoints')
-    if not os.path.exists('./checkpoints/' + exp_name):
+    # if not os.path.exists('./checkpoints'):
+    #     os.mkdir('./checkpoints')
+    if not os.path.exists(args.path):
         # recursive creation
-        os.makedirs('./checkpoints/' + exp_name)
+        os.makedirs(args.path)
 
     info = {}
     info['date'] = date_str
@@ -52,14 +40,15 @@ if __name__ == "__main__":
     info['nb_new'] = args.nb_new
     info['checkpoint_freq'] = args.checkpoint_freq
     info['checkpoint_nb_gen'] = args.checkpoint_nb_gen
-    info['exp_name'] = args.exp_name
+    info['exp_name'] = args.path
     info['model'] = args.model
 
-    np.save('./checkpoints/' + exp_name + '/info.npy', info)
+    np.save(args.path + '/info.npy', info)
 
     data = sample_2d_data(args.data, nb_samples, rng)
     if args.model == 'gmm':
-        model = Gaussian_Mixture_Model(nb=8, dim=2, rng=rng)
+        model = Gaussian_Mixture_Model(
+            n_gaussians=8, dim=2, rng=rng)
     else:
         raise NotImplementedError
 
@@ -69,7 +58,7 @@ if __name__ == "__main__":
     epochs_schedule = [1] * nb_iters
     eval_schedule = np.arange(0, nb_iters, 1)
 
-    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=exp_name)
+    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path)
     metrics, theta_list = performative_generator.train()
 
     # keys = list(metrics.keys())

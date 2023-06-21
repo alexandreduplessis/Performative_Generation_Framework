@@ -60,12 +60,17 @@ class Performative_Generator():
             losses = self.model.train(data_to_train, self.epochs_schedule[i])
             # Save model
             if i % self.checkpoint_freq == 0:
-                self.model.save_model(f"./checkpoints/{self.exp_name}/model_{i}.pt")
+                self.model.save_model(
+                    f"{self.exp_name}/model_{i}")
                 # generate
-                gen_data = self.model.generate(self.checkpoint_nb_gen, f"./checkpoints/{self.exp_name}/generated_{i}.pt")
+                gen_data = self.model.generate(
+                    self.checkpoint_nb_gen, f"{self.exp_name}/generated_{i}.pt")
         # One last save
-        self.model.save_model(f"./checkpoints/{self.exp_name}/model_{i}.pt")
-        gen_data = self.model.generate(self.checkpoint_nb_gen, f"./checkpoints/{self.exp_name}/generated_{i}.pt")
+        self.model.save_model(
+            f"{self.exp_name}/model_{i}")
+        gen_data = self.model.generate(
+            self.checkpoint_nb_gen,
+            f"{self.exp_name}/generated_{i}.pt")
             # if i in self.eval_schedule:
             #     theta[i] = self.model.get_theta()
             #     # Evaluate on old_data

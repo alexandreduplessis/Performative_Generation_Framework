@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 from matplotlib import cm
+from perfgen.argparse import my_parser
+from perfgen.models.gmm import Gaussian_Mixture_Model
 
 
 def plt_density(
@@ -18,3 +20,7 @@ def plt_density(
     ax.get_xaxis().set_ticks([])
     ax.get_yaxis().set_ticks([])
     ax.set_title(title)
+
+args = my_parser()
+model = Gaussian_Mixture_Model()
+model.load(args.path + '/' + "model_" + '0.pt')
