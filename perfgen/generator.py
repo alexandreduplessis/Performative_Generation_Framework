@@ -63,7 +63,9 @@ class Performative_Generator():
                 self.model.save_model(f"./checkpoints/{self.exp_name}/model_{i}.pt")
                 # generate
                 gen_data = self.model.generate(self.checkpoint_nb_gen, f"./checkpoints/{self.exp_name}/generated_{i}.pt")
-
+        # One last save
+        self.model.save_model(f"./checkpoints/{self.exp_name}/model_{i}.pt")
+        gen_data = self.model.generate(self.checkpoint_nb_gen, f"./checkpoints/{self.exp_name}/generated_{i}.pt")
             # if i in self.eval_schedule:
             #     theta[i] = self.model.get_theta()
             #     # Evaluate on old_data
