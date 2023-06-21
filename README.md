@@ -1,4 +1,9 @@
 # Performative Generation
 
-To install the package, run
-'pip install -e .'
+## Installation
+To install the package, run `pip install -e .`
+
+## Usage
+To train a model, run `python expes/main.py`.
+
+To plot densities, run `python expes/figure_density.py`
