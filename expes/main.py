@@ -20,15 +20,7 @@ if __name__ == "__main__":
     nb_samples = args.nb_samples
 
     rng = check_random_state(0)
-    # if args.path == "":
-    #     exp_name = args.model + '/' + args.data + '/' + date_str
-    # else:
-    #     exp_name = args.path
-    # create folder in ./checkpoints
-    # if not os.path.exists('./checkpoints'):
-    #     os.mkdir('./checkpoints')
     if not os.path.exists(args.path):
-        # recursive creation
         os.makedirs(args.path)
 
     info = {}
