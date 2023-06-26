@@ -14,7 +14,8 @@ class Normalizing_Flow():
     Normalizing Flow
     """
     def __init__(
-            self, num_layers = 5, dim=2):
+            self, args, num_layers = 5, dim=2):
+        self.args = args
         self.num_layers = num_layers
         self.dim = dim
         base_dist = StandardNormal(shape=[self.dim])
@@ -27,7 +28,7 @@ class Normalizing_Flow():
                 hidden_features=64))
         transform = CompositeTransform(transforms)
 
-        self.flow = Flow(transform, base_dist)
+        self.flow = Flow(transform, base_dist).to(self.args.dev)
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
@@ -35,12 +36,14 @@ class Normalizing_Flow():
         self.max_gradient_norm = 1
 
     def train(self, data, epochs=10_000):
-        dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
+        dataloader = torch.utils.data.DataLoader(
+            data, batch_size=128, shuffle=True)
         optimizer = optim.Adam(self.flow.parameters())
         self.losses = []
         for epoch in range(epochs):
             loss_sum = 0
             for x in dataloader:
+                x = x.to(self.args.dev)
                 optimizer.zero_grad()
                 loss = -self.flow.log_prob(inputs=x).mean()
                 loss.backward()
@@ -64,14 +67,21 @@ class Normalizing_Flow():
         return samples
 
     def eval(self, data, **kwargs):
+        data = data.to(self.args.dev)
         with torch.no_grad():
             metrics = {}
             # compute the std and mean of the data, taking weights into account
             data_gen = self.generate(len(data))
+            # if data_gen.is_cuda:
+            #     data_gen = data_gen.cpu().numpy()
             model_std = torch.std(data_gen, dim=0)
             metrics['std'] = torch.norm(model_std)
-            metrics['wasserstein'] = wasserstein_distance(data, data_gen)
-            metrics['nll'] = - self.log_prob(data).mean(axis=-1).detach().numpy()
+            # metrics['wasserstein'] = wasserstein_distance(data, data_gen)
+            # res = - self.log_prob(data).mean(axis=-1)
+            # if res.is_cuda:
+            #     metrics['nll'] = res.detach().cpu().numpy()
+            # else:
+            metrics['nll'] = - self.log_prob(data).mean(axis=-1).detach().cpu()
             return metrics
 
     def log_prob(self, data):
