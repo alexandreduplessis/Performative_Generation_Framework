@@ -84,7 +84,10 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         data = 2 * rng.permutation(np.einsum("ti,tij->tj", features, rotations))
         # return torch.from_numpy(data)
         return data
-
+    
+    elif dataset == '1gaussian':
+        return torch.randn(n_samples, 2)
+    
     elif dataset == 'checkerboard':
         x1 = torch.rand(n_samples) * 4 - 2
         x2_ = torch.rand(n_samples) - torch.randint(0, 2, (n_samples,), dtype=torch.float) * 2

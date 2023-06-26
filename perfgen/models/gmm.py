@@ -50,7 +50,7 @@ class Gaussian_Mixture_Model():
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance'}
 
-    def train(self, data, epochs):
+    def train(self, data, epochs=1):
         self.losses = []
         for epoch in range(epochs):
             gmm = GaussianMixture(

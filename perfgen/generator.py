@@ -67,7 +67,6 @@ class Performative_Generator():
                     self.checkpoint_nb_gen, f"{self.exp_name}/generated_{i}.pt")
             
             if i in self.eval_schedule:
-                theta[i] = self.model.get_theta()
                 # Evaluate on old_data
                 new_metrics = self.model.eval(self.old_data)
                 if i == self.eval_schedule[0]:
@@ -89,4 +88,4 @@ class Performative_Generator():
         self.model.save_model(f"{self.exp_name}/model_final")
         gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.exp_name}/generated_final.pt")
 
-        return metrics, theta
+        return metrics
