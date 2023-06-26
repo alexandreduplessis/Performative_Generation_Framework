@@ -5,5 +5,6 @@ perfgen.egg-info/PKG-INFO
 perfgen.egg-info/SOURCES.txt
 perfgen.egg-info/top_level.txt
 perfgen.egg-info/requires.txt
+expes/checkpoints/*
 checkpoints/*
 test.ipynb

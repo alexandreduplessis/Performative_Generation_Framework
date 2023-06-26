@@ -22,15 +22,16 @@ class Normalizing_Flow():
         transforms = []
         for _ in range(self.num_layers):
             transforms.append(ReversePermutation(features=self.dim))
-            transforms.append(MaskedAffineAutoregressiveTransform(features=self.dim, 
-                                                                hidden_features=10))
+            transforms.append(MaskedAffineAutoregressiveTransform(
+                features=self.dim,
+                hidden_features=64))
         transform = CompositeTransform(transforms)
 
         self.flow = Flow(transform, base_dist)
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
-                                    'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance'}
+                                    'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
 
     def train(self, data, epochs=100):
         dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
@@ -58,13 +59,15 @@ class Normalizing_Flow():
         return samples
 
     def eval(self, data, **kwargs):
-        metrics = {}
-        # compute the std and mean of the data, taking weights into account
-        data_gen = self.generate(len(data))
-        model_std = torch.std(data_gen, dim=0)
-        metrics['std'] = torch.norm(model_std)
-        metrics['wasserstein'] = wasserstein_distance(data, data_gen)
-        return metrics
+        with torch.no_grad():
+            metrics = {}
+            # compute the std and mean of the data, taking weights into account
+            data_gen = self.generate(len(data))
+            model_std = torch.std(data_gen, dim=0)
+            metrics['std'] = torch.norm(model_std)
+            metrics['wasserstein'] = wasserstein_distance(data, data_gen)
+            metrics['nll'] = self.log_prob(data).mean(axis=-1).detach().numpy()
+            return metrics
 
     def log_prob(self, data):
         return self.flow.log_prob(data)
@@ -74,15 +77,15 @@ class Normalizing_Flow():
 
     def save_model(self, path):
         torch.save(self.flow.state_dict(), path)
-    
+
     def reset(self):
         base_dist = StandardNormal(shape=[self.dim])
 
         transforms = []
         for _ in range(self.num_layers):
             transforms.append(ReversePermutation(features=self.dim))
-            transforms.append(MaskedAffineAutoregressiveTransform(features=self.dim, 
-                                                                hidden_features=10))
+            transforms.append(MaskedAffineAutoregressiveTransform(features=self.dim,
+                                                                hidden_features=64))
         transform = CompositeTransform(transforms)
 
         self.flow = Flow(transform, base_dist)

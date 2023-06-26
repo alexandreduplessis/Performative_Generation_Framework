@@ -13,7 +13,7 @@ def my_parser():
     parser.add_argument('--checkpoint_freq', type=int, default=10, help='Frequency of checkpoints')
     parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
     parser.add_argument('--path', type=str, default="", help='Name of the experiment')
-    parser.add_argument('--reset', type=bool, default=True, help='Reset the model at each iteration')
+    parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
 
     args = parser.parse_args()
     if args.path == "":
