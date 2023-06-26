@@ -112,6 +112,6 @@ class Gaussian_Mixture_Model():
     def save_model(self, path):
         model_parameters = self.get_theta()
         torch.save(model_parameters, path)
-    
+
     def reset(self):
         return None

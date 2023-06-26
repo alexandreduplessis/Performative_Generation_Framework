@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from perfgen.argparse import my_parser
@@ -27,16 +29,18 @@ def plt_density(
     ax.get_yaxis().set_ticks([])
     ax.set_title(title)
 
+
 args = my_parser()
 if args.model == 'gmm':
+    n_gaussians = 8  # To be investigated
     model = Gaussian_Mixture_Model(
-        n_gaussians=50, dim=2)
+        n_gaussians=n_gaussians, dim=2)
 elif args.model == 'flow':
     model = Normalizing_Flow()
 else:
     raise NotImplementedError
 
-n_plots = 10  # TODO read automatically
+n_plots = 2  # TODO read automatically
 indices = np.arange(0, n_plots) * args.checkpoint_freq
 assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))

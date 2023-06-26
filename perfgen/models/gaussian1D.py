@@ -10,7 +10,7 @@ class Gaussian_Estimator_1D():
         Mean of the Gaussian
     sigma : float
         Standard deviation of the Gaussian
-    
+
     Methods
     -------
     train(data, epochs)
@@ -29,7 +29,7 @@ class Gaussian_Estimator_1D():
         self.name = '1D Gaussian Estimator'
         self.metrics_titles = {'oldmean': 'Mean', 'oldstd': 'Standard deviation', 'oldweisserstein': 'Weisserstein distance',\
                                  'evalmean': 'Mean', 'evalstd': 'Standard deviation', 'evalweisserstein': 'Weisserstein distance'}
-    
+
     def train(self, data, epochs):
         self.losses = []
         for epoch in range(epochs):
@@ -38,10 +38,10 @@ class Gaussian_Estimator_1D():
             self.losses.append(-1.)
         self.losse = np.array(self.losses)
         return self.losses
-    
+
     def generate(self, nb_samples):
         return np.random.normal(self.mu, self.sigma, nb_samples)
-    
+
     def eval(self, data, **kwargs):
         metrics = {}
         # metrics['mean'] = np.abs(np.mean(data) - self.mu)

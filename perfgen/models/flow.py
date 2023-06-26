@@ -34,7 +34,7 @@ class Normalizing_Flow():
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
         self.max_gradient_norm = 1
 
-    def train(self, data, epochs=100):
+    def train(self, data, epochs=10_000):
         dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
         optimizer = optim.Adam(self.flow.parameters())
         self.losses = []

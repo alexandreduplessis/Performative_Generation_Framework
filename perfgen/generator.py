@@ -68,7 +68,7 @@ class Performative_Generator():
                 # generate
                 gen_data = self.model.generate(
                     self.checkpoint_nb_gen, f"{self.exp_name}/generated_{i}.pt")
-            
+
             if i in self.eval_schedule:
                 # Evaluate on old_data
                 new_metrics = self.model.eval(self.old_data)

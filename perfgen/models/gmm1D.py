@@ -13,7 +13,7 @@ class Gaussian_Mixture_Model_1D():
         Standard deviations of the Gaussians
     weights : array
         Weights of the Gaussians
-    
+
     Methods
     -------
     train(data, epochs)
@@ -32,7 +32,7 @@ class Gaussian_Mixture_Model_1D():
             sigmas = np.array([1]*nb)
         if weights is None:
             weights = np.array([1/nb]*nb)
-        
+
         self.nb = nb
         self.mus = mus
         self.sigmas = sigmas
@@ -41,7 +41,7 @@ class Gaussian_Mixture_Model_1D():
         self.name = '1D Gaussian Mixture Model'
         self.metrics_titles = {'oldmean': 'Mean', 'oldstd': 'Standard deviation', 'oldweisserstein': 'Pseudo-Weisserstein distance',\
                                     'evalmean': 'Mean', 'evalstd': 'Standard deviation', 'evalweisserstein': 'Pseudo-Weisserstein distance'}
-        
+
     def train(self, data, epochs):
         self.losses = []
         for epoch in range(epochs):
@@ -53,7 +53,7 @@ class Gaussian_Mixture_Model_1D():
             self.losses.append(-1.)
         self.losses = np.array(self.losses)
         return self.losses
-    
+
     def generate(self, nb_samples):
         samples = []
         for _ in range(nb_samples):
@@ -61,7 +61,7 @@ class Gaussian_Mixture_Model_1D():
             new_sample = np.random.normal(self.mus[i], self.sigmas[i])
             samples.append(new_sample.item())
         return np.array(samples)
-    
+
     def eval(self, data, **kwargs):
         metrics = {}
         # metrics['mean'] = np.abs(np.mean(data) - np.mean(self.mus))

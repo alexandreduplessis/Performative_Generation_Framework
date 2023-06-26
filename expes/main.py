@@ -58,15 +58,15 @@ if __name__ == "__main__":
 
     np.save(args.path + '/metrics.npy', metrics)
 
-    keys = list(metrics.keys())
-    keys.remove('indices')
-    keys_names = model.metrics_titles
+    # keys = list(metrics.keys())
+    # keys.remove('indices')
+    # keys_names = model.metrics_titles
 
-    nb_plots = len(keys)
+    # nb_plots = len(keys)
 
-    # make subplots
-    fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
-    for i, key in enumerate(keys):
-        axs[i].plot(metrics['indices'], metrics[key])
-        axs[i].set_title(f"{keys_names[key]} for {model.name}")
-    plt.show()
+    # # make subplots
+    # fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
+    # for i, key in enumerate(keys):
+    #     axs[i].plot(metrics['indices'], metrics[key])
+    #     axs[i].set_title(f"{keys_names[key]} for {model.name}")
+    # plt.show()
