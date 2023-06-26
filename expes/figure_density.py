@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from perfgen.argparse import my_parser
@@ -40,7 +39,7 @@ elif args.model == 'flow':
 else:
     raise NotImplementedError
 
-n_plots = 2  # TODO read automatically
+n_plots = 10  # TODO read automatically
 indices = np.arange(0, n_plots) * args.checkpoint_freq
 assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
@@ -51,4 +50,5 @@ for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
     plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title(str(idx_checkpoint))
 
-plt.show()
+plt.savefig(args.path + "/fig.pdf")
+# plt.show()
