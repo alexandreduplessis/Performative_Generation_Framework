@@ -33,7 +33,7 @@ class Performative_Generator():
     def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, eval_data=None):
         self.model = model
         self.data = data
-        self.old_data = data.copy()
+        self.old_data = data.clone()
         self.nb_iters = nb_iters
         self.prop_old_schedule = prop_old_schedule
         self.nb_new_schedule = nb_new_schedule
@@ -54,7 +54,7 @@ class Performative_Generator():
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
             nb_new = self.nb_new_schedule[i]
             data_to_train = mix_data(self.old_data[:nb_old], self.model.generate(nb_new).reshape((nb_new, self.old_data.shape[1])))
-            self.data = data_to_train.copy() # not useful
+            self.data = data_to_train.clone() # not useful
 
             # Train model
             losses = self.model.train(data_to_train, self.epochs_schedule[i])

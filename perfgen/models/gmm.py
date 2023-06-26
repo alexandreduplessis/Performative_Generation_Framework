@@ -83,9 +83,8 @@ class Gaussian_Mixture_Model():
         metrics = {}
         # compute the std and mean of the data, taking weights into account
         data_gen = self.generate(len(data))
-        data_std = np.std(data, axis=0)
-        model_std = np.std(data_gen, axis=0)
-        metrics['std'] = np.linalg.norm(model_std)
+        model_std = torch.std(torch.from_numpy(data_gen), dim=0)
+        metrics['std'] = torch.norm(model_std)
         metrics['wasserstein'] = wasserstein_distance(data, data_gen)
         return metrics
 
