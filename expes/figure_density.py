@@ -32,14 +32,13 @@ model = Gaussian_Mixture_Model()
 
 
 n_plots = 10  # TODO read automatically
+indices = np.arange(0, n_plots) * args.checkpoint_freq
+assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
 
-for idx_arr, idx_checkpoint in enumerate(tqdm(
-        np.arange(n_plots) * args.checkpoint_freq)):
+for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
     model.load(args.path + '/' + "model_" + str(idx_checkpoint) + '.npy')
     plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title("Epoch " + str(idx_checkpoint))
-
-fig.title("GMM density on 8 gaussians")
 
 plt.show()

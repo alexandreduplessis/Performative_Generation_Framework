@@ -16,7 +16,7 @@ def my_parser():
 
     args = parser.parse_args()
     if args.path == "":
-        args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters)
+        args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters) + '/' + str(args.nb_samples)
     else:
         args.path = args.path
 

@@ -53,34 +53,36 @@ if __name__ == "__main__":
     performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path)
     metrics, theta_list = performative_generator.train()
 
-    # keys = list(metrics.keys())
-    # keys.remove('indices')
-    # keys_names = model.metrics_titles
+    np.save(args.path + '/metrics.npy', metrics)
 
-    # nb_plots = len(keys)
+    keys = list(metrics.keys())
+    keys.remove('indices')
+    keys_names = model.metrics_titles
+
+    nb_plots = len(keys)
 
     # make subplots
-    # fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
-    # for i, key in enumerate(keys):
-    #     axs[i].plot(metrics['indices'], metrics[key])
-    #     axs[i].set_title(f"{keys_names[key]} for {model.name}")
-    # plt.show()
+    fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
+    for i, key in enumerate(keys):
+        axs[i].plot(metrics['indices'], metrics[key])
+        axs[i].set_title(f"{keys_names[key]} for {model.name}")
+    plt.show()
 
-    # if len(theta_list.keys()) > 0:
-    #     nb_plots = 10
-    #     fig, axs = plt.subplots(1, nb_plots, figsize=(20, 3))
-    #     keys = list(theta_list.keys())
-    #     plot_keys = keys[::len(keys) // nb_plots]
-    #     if len(plot_keys) > nb_plots:
-    #         plot_keys = plot_keys[:nb_plots]
-    #     for plot_id in range(nb_plots):
-    #         key = keys[plot_keys[plot_id]]
-    #         all = theta_list[key]
-    #         model = Gaussian_Mixture_Model(nb=8, dim=2)
-    #         model.load(all)
-    #         X, Y = np.meshgrid(np.linspace(-6, 6), np.linspace(-6,6))
-    #         XX = np.array([X.ravel(), Y.ravel()]).T
-    #         Z = model.score_samples(XX)
-    #         Z = Z.reshape((50,50))
-    #         axs[plot_id].contour(X, Y, Z)
-    #     plt.show()
+    if len(theta_list.keys()) > 0:
+        nb_plots = 10
+        fig, axs = plt.subplots(1, nb_plots, figsize=(20, 3))
+        keys = list(theta_list.keys())
+        plot_keys = keys[::len(keys) // nb_plots]
+        if len(plot_keys) > nb_plots:
+            plot_keys = plot_keys[:nb_plots]
+        for plot_id in range(nb_plots):
+            key = keys[plot_keys[plot_id]]
+            all = theta_list[key]
+            model = Gaussian_Mixture_Model(nb=8, dim=2)
+            model.load(all)
+            X, Y = np.meshgrid(np.linspace(-6, 6), np.linspace(-6,6))
+            XX = np.array([X.ravel(), Y.ravel()]).T
+            Z = model.score_samples(XX)
+            Z = Z.reshape((50,50))
+            axs[plot_id].contour(X, Y, Z)
+        plt.show()
