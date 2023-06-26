@@ -36,7 +36,7 @@ elif args.model == 'flow':
 else:
     raise NotImplementedError
 
-n_plots = 20  # TODO read automatically
+n_plots = 10  # TODO read automatically
 indices = np.arange(0, n_plots) * args.checkpoint_freq
 assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
@@ -46,9 +46,5 @@ for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
     print(model.generate(1000).std())
     plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title(str(idx_checkpoint))
-    if idx_arr == n_plots - 1:
-        import ipdb; ipdb.set_trace()
-
-    # axs[idx_arr].set_title("Epoch " + str(idx_checkpoint))
 
 plt.show()

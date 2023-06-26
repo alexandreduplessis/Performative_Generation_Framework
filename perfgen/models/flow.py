@@ -32,6 +32,7 @@ class Normalizing_Flow():
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
+        self.max_gradient_norm = 1
 
     def train(self, data, epochs=100):
         dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
@@ -43,8 +44,12 @@ class Normalizing_Flow():
                 optimizer.zero_grad()
                 loss = -self.flow.log_prob(inputs=x).mean()
                 loss.backward()
+                grad_norm = torch.nn.utils.clip_grad_norm_(
+                    self.flow.parameters(),
+                    self.max_gradient_norm)
                 loss_sum += loss.item()
-                optimizer.step()
+                if torch.isfinite(grad_norm):
+                    optimizer.step()
                 self.losses.append(loss_sum)
         self.losses = torch.tensor(self.losses)
         return self.losses
@@ -66,7 +71,7 @@ class Normalizing_Flow():
             model_std = torch.std(data_gen, dim=0)
             metrics['std'] = torch.norm(model_std)
             metrics['wasserstein'] = wasserstein_distance(data, data_gen)
-            metrics['nll'] = self.log_prob(data).mean(axis=-1).detach().numpy()
+            metrics['nll'] = - self.log_prob(data).mean(axis=-1).detach().numpy()
             return metrics
 
     def log_prob(self, data):

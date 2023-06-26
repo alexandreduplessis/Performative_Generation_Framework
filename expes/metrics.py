@@ -15,12 +15,13 @@ metrics = np.load(args.path + '/metrics.npy', allow_pickle=True).item()
 indices = metrics['indices']
 oldstd = metrics['oldstd']
 oldwasserstein = metrics['oldwasserstein']
+nll = metrics['oldnll']
 plt.plot(indices, oldstd, label='Standard deviation')
 plt.title('Standard deviation')
 plt.show()
 plt.plot(indices, oldwasserstein, label='Wasserstein distance')
 plt.title('Wasserstein distance')
 plt.show()
-plt.plot(indices, oldwasserstein, label='nll')
+plt.semilogy(indices, nll, label='Negative Log-Likelihood')
 plt.title('nll')
 plt.show()
