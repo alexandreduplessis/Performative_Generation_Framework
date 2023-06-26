@@ -4,6 +4,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 from perfgen.argparse import my_parser
 from perfgen.models.gmm import Gaussian_Mixture_Model
+from perfgen.models.flow import Normalizing_Flow
 from tqdm import tqdm
 
 LOW = -4
@@ -27,7 +28,13 @@ def plt_density(
     ax.set_title(title)
 
 args = my_parser()
-model = Gaussian_Mixture_Model()
+if args.model == 'gmm':
+    model = Gaussian_Mixture_Model(
+        n_gaussians=50, dim=2)
+elif args.model == 'flow':
+    model = Normalizing_Flow()
+else:
+    raise NotImplementedError
 # TODO modify format, no more npy
 
 
@@ -37,7 +44,7 @@ assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
 
 for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
-    model.load(args.path + '/' + "model_" + str(idx_checkpoint) + '.npy')
+    model.load(args.path + '/' + "model_" + str(idx_checkpoint))
     plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title("Epoch " + str(idx_checkpoint))
 

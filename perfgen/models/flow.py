@@ -74,3 +74,15 @@ class Normalizing_Flow():
 
     def save_model(self, path):
         torch.save(self.flow.state_dict(), path)
+    
+    def reset(self):
+        base_dist = StandardNormal(shape=[self.dim])
+
+        transforms = []
+        for _ in range(self.num_layers):
+            transforms.append(ReversePermutation(features=self.dim))
+            transforms.append(MaskedAffineAutoregressiveTransform(features=self.dim, 
+                                                                hidden_features=10))
+        transform = CompositeTransform(transforms)
+
+        self.flow = Flow(transform, base_dist)

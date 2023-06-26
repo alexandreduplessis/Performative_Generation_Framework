@@ -60,12 +60,13 @@ class Gaussian_Mixture_Model():
             self.mus = gmm.means_
             self.sigmas = gmm.covariances_
             self.weights = gmm.weights_
+            self.precision_cholesky_ = gmm.precisions_cholesky_
             self.losses.append(-1.)
         self.losses = np.array(self.losses)
         return self.losses
 
     def get_theta(self):
-        return {'mus': self.mus, 'sigmas': self.sigmas, 'weights': self.weights}
+        return {'mus': self.mus, 'sigmas': self.sigmas, 'weights': self.weights, 'precision_cholesky_': self.precision_cholesky_}
 
     def generate(self, nb_samples, save_path=None):
         samples = []
@@ -91,20 +92,26 @@ class Gaussian_Mixture_Model():
     def log_prob(self, data):
         # check the dimension of the data
         assert data.shape[1] == self.dim
-        scores = []
-        for sample in data:
-            score = 0
-            for i in range(self.n_gaussians):
-                score += self.weights[i] * np.exp(-0.5 * np.dot(np.dot((sample - self.mus[i]), np.linalg.inv(self.sigmas[i])), (sample - self.mus[i]).T))
-            scores.append(np.log(score))
-        return torch.tensor(scores)
+        gmm = GaussianMixture(
+                n_components=self.n_gaussians, covariance_type='full',
+                random_state=self.rng)
+        gmm.means_ = self.mus
+        gmm.covariances_ = self.sigmas
+        gmm.weights_ = self.weights
+        gmm.precisions_cholesky_ = self.precision_cholesky_
+        return torch.from_numpy(gmm.score_samples(data))
 
     def load(self, path):
-        theta = np.load(path, allow_pickle=True).item()
+        theta = torch.load(path)
         self.mus = theta['mus']
         self.sigmas = theta['sigmas']
         self.weights = theta['weights']
+        self.precision_cholesky_ = theta['precision_cholesky_']
         self.n_gaussians, self.dim = self.mus.shape  # TODO to be fixed
 
     def save_model(self, path):
-        np.save(path, self.get_theta())
+        model_parameters = self.get_theta()
+        torch.save(model_parameters, path)
+    
+    def reset(self):
+        return None

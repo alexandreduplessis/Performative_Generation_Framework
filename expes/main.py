@@ -33,6 +33,7 @@ if __name__ == "__main__":
     info['checkpoint_nb_gen'] = args.checkpoint_nb_gen
     info['exp_name'] = args.path
     info['model'] = args.model
+    info['reset'] = args.reset
 
     np.save(args.path + '/info.npy', info)
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     nb_new_schedule = [0] + [args.nb_new] * nb_iters
     eval_schedule = np.arange(0, nb_iters, 1)
 
-    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path)
+    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset)
     metrics = performative_generator.train()
 
     np.save(args.path + '/metrics.npy', metrics)

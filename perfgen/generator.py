@@ -30,7 +30,7 @@ class Performative_Generator():
     eval_datas : array
         Dataset on which to evaluate the model
     """
-    def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, eval_data=None):
+    def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, eval_data=None):
         self.model = model
         self.data = data
         self.old_data = data.clone()
@@ -43,6 +43,7 @@ class Performative_Generator():
         self.checkpoint_freq = checkpoint_freq
         self.checkpoint_nb_gen = checkpoint_nb_gen
         self.exp_name = exp_name
+        self.reset = reset
 
 
     def train(self):
@@ -50,6 +51,8 @@ class Performative_Generator():
         metrics['indices'] = self.eval_schedule
         theta = {}
         for i in tqdm(range(self.nb_iters)):
+            if self.reset:
+                self.model.reset()
             # Generate data to train
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
             nb_new = self.nb_new_schedule[i]
