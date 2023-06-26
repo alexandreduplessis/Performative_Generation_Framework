@@ -1,6 +1,6 @@
 import argparse
 import time
-
+import torch
 
 def my_parser():
     parser = argparse.ArgumentParser(description='Performative Generator')
@@ -16,6 +16,8 @@ def my_parser():
     parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
 
     args = parser.parse_args()
+    args.dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     if args.path == "":
         args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters) + '/' + str(args.nb_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)
     else:

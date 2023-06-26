@@ -44,7 +44,7 @@ if __name__ == "__main__":
             n_gaussians=50, dim=2, rng=rng)
         epochs_schedule = [1] * nb_iters
     elif args.model == 'flow':
-        model = Normalizing_Flow()
+        model = Normalizing_Flow(args)
         epochs_schedule = [100] * nb_iters
     else:
         raise NotImplementedError
@@ -53,7 +53,8 @@ if __name__ == "__main__":
     nb_new_schedule = [0] + [args.nb_new] * nb_iters
     eval_schedule = np.arange(0, nb_iters, 1)
 
-    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset)
+    performative_generator = Performative_Generator(
+        model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset)
     metrics = performative_generator.train()
 
     np.save(args.path + '/metrics.npy', metrics)
