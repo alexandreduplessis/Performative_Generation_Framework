@@ -9,5 +9,4 @@ expes/checkpoints/*
 checkpoints/*
 test.ipynb
 wandb
-runs
-runs/last_run.json
+runs/*
