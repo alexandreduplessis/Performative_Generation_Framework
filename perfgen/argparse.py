@@ -6,9 +6,9 @@ import json
 
 def my_parser():
     parser = argparse.ArgumentParser(description='Performative Generator')
-    parser.add_argument('--model', type=str, default='gmm', help='Model to train and generate data')
-    parser.add_argument('--nb_iters', type=int, default=200, help='Number of iterations') # Warning: small values of nb_iters can be highly misleading when reading the results
-    parser.add_argument('--nb_samples', type=int, default=100, help='Number of samples')
+    parser.add_argument('--model', type=str, default='bnaf', help='Model to train and generate data')
+    parser.add_argument('--nb_iters', type=int, default=1, help='Number of iterations') # Warning: small values of nb_iters can be highly misleading when reading the results
+    parser.add_argument('--nb_samples', type=int, default=1000, help='Number of samples')
     parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
     parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
     parser.add_argument('--nb_new', type=int, default=-1, help='Number of new datapoints to generate')

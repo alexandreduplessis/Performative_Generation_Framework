@@ -9,8 +9,9 @@
     "checkpoint_nb_gen": 1000,
     "path": "",
     "reset": false,
-    "epochs": 100,
+    "epochs": 500,
     "device": "None",
     "last_run": false,
-    "exp_name": ""
+    "exp_name": "",
+    "config_file": "./expes/configs.conf"
 }
