@@ -1,4 +1,4 @@
-import argparse
+import argparse, configparser
 import time
 import torch
 import json
@@ -20,8 +20,17 @@ def my_parser():
     parser.add_argument('--device', type=str, default='None', help='Device to use')
     parser.add_argument('--last_run', type=bool, default=False, help="Use the last experiment's arguments")
     parser.add_argument('--exp_name', type=str, default="", help='Name of the experiment')
+    parser.add_argument("-c", "--config_file", type=str, default = "./expes/configs.conf", help='Config file')
 
     args = parser.parse_args()
+
+    # if args.config_file:
+    #     config = configparser.ConfigParser()
+    #     config.read(args.config_file)
+    #     defaults = {}
+    #     defaults.update(dict(config.items("Defaults")))
+    #     parser.set_defaults(**defaults)
+    #     args = parser.parse_args()
 
     if args.last_run:
         try:

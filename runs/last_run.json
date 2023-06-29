@@ -1,7 +1,7 @@
 {
     "model": "bnaf",
     "nb_iters": 1,
-    "nb_samples": 1000,
+    "nb_samples": 10000,
     "data": "8gaussians",
     "prop_old": 0.0,
     "nb_new": -1,
@@ -9,7 +9,7 @@
     "checkpoint_nb_gen": 1000,
     "path": "",
     "reset": false,
-    "epochs": 1000,
+    "epochs": 100,
     "device": "None",
     "last_run": false,
     "exp_name": ""
