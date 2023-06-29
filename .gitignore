@@ -9,3 +9,4 @@ expes/checkpoints/*
 checkpoints/*
 test.ipynb
 wandb
+runs

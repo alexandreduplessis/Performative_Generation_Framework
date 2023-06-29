@@ -12,7 +12,7 @@ def my_parser():
     parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
     parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
     parser.add_argument('--nb_new', type=int, default=-1, help='Number of new datapoints to generate')
-    parser.add_argument('--checkpoint_freq', type=int, default=10, help='Frequency of checkpoints')
+    parser.add_argument('--checkpoint_freq', type=int, default=1, help='Frequency of checkpoints')
     parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
     parser.add_argument('--path', type=str, default="", help='Name of the experiment')
     parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
