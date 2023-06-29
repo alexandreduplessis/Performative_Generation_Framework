@@ -1,0 +1,15 @@
+{
+    "model": "bnaf",
+    "nb_iters": 2,
+    "nb_samples": 10,
+    "data": "1gaussian",
+    "prop_old": 0.0,
+    "nb_new": 10,
+    "checkpoint_freq": 1,
+    "checkpoint_nb_gen": 1000,
+    "path": "",
+    "reset": false,
+    "epochs": 3,
+    "device": "None",
+    "last_run": false
+}
