@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import wandb
 import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ def plt_density(
     ax.get_yaxis().set_ticks([])
     ax.set_title(title)
 
+wandb.login()
 
 args = my_parser()
 if args.model == 'gmm':
@@ -41,6 +43,23 @@ elif args.model == 'bnaf':
     model = BNAFlow()
 else:
     raise NotImplementedError
+
+run = wandb.init(
+    project="Performative_Generation_Framework",
+    config={
+        "nb_iters": args.nb_iters,
+        "nb_samples": args.nb_samples,
+        "data": args.data,
+        "prop_old": args.prop_old,
+        "nb_new": args.nb_new,
+        "checkpoint_freq": args.checkpoint_freq,
+        "checkpoint_nb_gen": args.checkpoint_nb_gen,
+        "exp_path": args.path,
+        "model": args.model,
+        "reset": args.reset
+    },
+    name=args.exp_name + "_viz"
+    )
 
 n_plots = 2  # TODO read automatically
 indices = np.arange(0, n_plots) * args.checkpoint_freq
@@ -55,3 +74,4 @@ for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
 
 # plt.savefig(args.path + "/fig.pdf")
 plt.show()
+wandb.log({"fig": fig})
