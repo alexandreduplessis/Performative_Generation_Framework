@@ -1,16 +1,16 @@
 {
     "model": "bnaf",
-    "nb_iters": 2,
+    "nb_iters": 8,
     "nb_samples": 10,
-    "data": "1gaussian",
+    "data": "8gaussians",
     "prop_old": 0.0,
-    "nb_new": 10,
+    "nb_new": -1,
     "checkpoint_freq": 1,
     "checkpoint_nb_gen": 1000,
     "path": "",
     "reset": false,
-    "epochs": 10,
+    "epochs": 2,
     "device": "None",
     "last_run": false,
-    "exp_name": "zoeifjzoeifj"
+    "exp_name": ""
 }

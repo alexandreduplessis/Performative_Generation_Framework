@@ -10,11 +10,10 @@ from perfgen.models.flow import Normalizing_Flow
 from perfgen.models.bnaf import BNAFlow
 from tqdm import tqdm
 
-LOW = -4
-HIGH = 4
+
 
 def plt_density(
-        model, ax, npts=100, memory=100, title="$q(x)$", device="cpu"):
+        model, ax, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4):
     side = np.linspace(LOW, HIGH, npts)
     xx, yy = np.meshgrid(side, side)
     z = np.hstack([xx.reshape(-1, 1), yy.reshape(-1, 1)])

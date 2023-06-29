@@ -1,5 +1,6 @@
 import numpy as np
 from perfgen.utils import mix_data
+from perfgen.plot_density import plt_density
 from tqdm import tqdm
 import torch
 import wandb
@@ -83,6 +84,9 @@ class Performative_Generator():
                     for keys in new_metrics.keys():
                         metrics["old"+str(keys)] = np.concatenate([metrics["old"+str(keys)], np.array([new_metrics[keys]])])
                         wandb.log({"old"+str(keys): new_metrics[keys]})
+                
+                plt_density(self.model, plt_name=f"density_{i}.png")
+
                 if self.eval_data is not None:
                     # Evaluate on eval_data
                     new_metrics = self.model.eval(self.old_data)
