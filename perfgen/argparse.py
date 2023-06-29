@@ -51,7 +51,7 @@ def my_parser():
 
     if args.device == 'None':
         args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
+
     if args.nb_new == -1:
         args.nb_new = args.nb_samples
 
@@ -59,10 +59,11 @@ def my_parser():
         if args.model == 'gmm':
             args.epochs = 1
         elif args.model == 'bnaf':
-            args.epochs = 20_000
+            args.epochs = 1_000
+            # args.epochs = 20_000
         elif args.model == 'flow':
             args.epochs = 100
-    
+
 
     if args.path == "":
         args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters) + '/' + str(args.nb_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)

@@ -14,8 +14,8 @@ from perfgen.models.bnaf import BNAFlow
 from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.argparse import my_parser
 
-
-if __name__ == "__main__":
+# @profile
+def main():
     wandb.login()
     date_str = time.strftime("%Y%m%d-%H%M%S")
     args = my_parser()
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         model = BNAFlow(args.device)
     else:
         raise NotImplementedError
-    
+
     run = wandb.init(
     project="Performative_Generation_Framework",
     config={
@@ -80,15 +80,6 @@ if __name__ == "__main__":
 
     np.save(args.path + '/metrics.npy', metrics)
 
-    # keys = list(metrics.keys())
-    # keys.remove('indices')
-    # keys_names = model.metrics_titles
 
-    # nb_plots = len(keys)
-
-    # # make subplots
-    # fig, axs = plt.subplots(nb_plots, 1, figsize=(10, 10))
-    # for i, key in enumerate(keys):
-    #     axs[i].plot(metrics['indices'], metrics[key])
-    #     axs[i].set_title(f"{keys_names[key]} for {model.name}")
-    # plt.show()
+if __name__ == "__main__":
+    main()
