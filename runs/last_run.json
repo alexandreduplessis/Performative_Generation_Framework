@@ -9,7 +9,8 @@
     "checkpoint_nb_gen": 1000,
     "path": "",
     "reset": false,
-    "epochs": 3,
+    "epochs": 10,
     "device": "None",
-    "last_run": false
+    "last_run": false,
+    "exp_name": "zoeifjzoeifj"
 }

@@ -2,6 +2,7 @@ import numpy as np
 from perfgen.utils import mix_data
 from tqdm import tqdm
 import torch
+import wandb
 
 class Performative_Generator():
     """
@@ -62,7 +63,7 @@ class Performative_Generator():
 
             # Train model
             losses = self.model.train(data_to_train, self.epochs_schedule[i])
-            
+
             # Save model
             if i % self.checkpoint_freq == 0:
                 self.model.save_model(
@@ -77,18 +78,22 @@ class Performative_Generator():
                 if i == self.eval_schedule[0]:
                     for keys in new_metrics.keys():
                         metrics["old"+str(keys)] = np.array([new_metrics[keys]])
+                        wandb.log({"old"+str(keys): new_metrics[keys]})
                 else:
                     for keys in new_metrics.keys():
                         metrics["old"+str(keys)] = np.concatenate([metrics["old"+str(keys)], np.array([new_metrics[keys]])])
+                        wandb.log({"old"+str(keys): new_metrics[keys]})
                 if self.eval_data is not None:
                     # Evaluate on eval_data
                     new_metrics = self.model.eval(self.old_data)
                     if i == self.eval_schedule[0]:
                         for keys in new_metrics.keys():
                             metrics["eval"+str(keys)] = np.array([new_metrics[keys]])
+                            wandb.log({"eval"+str(keys): new_metrics[keys]})
                     else:
                         for keys in new_metrics.keys():
                             metrics["eval"+str(keys)] = np.concatenate([metrics["eval"+keys], np.array([new_metrics[keys]])])
+                            wandb.log({"eval"+str(keys): new_metrics[keys]})
         # One last save
         self.model.save_model(f"{self.exp_name}/model_final")
         gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.exp_name}/generated_final.pt")

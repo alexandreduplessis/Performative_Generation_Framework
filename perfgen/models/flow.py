@@ -1,6 +1,7 @@
 import numpy as np
 from perfgen.utils import wasserstein_distance
 from tqdm import tqdm
+import wandb
 import torch
 from torch import nn
 from torch import optim
@@ -55,6 +56,7 @@ class Normalizing_Flow():
                 if torch.isfinite(grad_norm):
                     optimizer.step()
                 self.losses.append(loss_sum)
+                wandb.log({'loss': loss_sum})
         self.losses = torch.tensor(self.losses)
         self.flow.to('cpu')
         return self.losses

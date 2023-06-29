@@ -8,3 +8,4 @@ perfgen.egg-info/requires.txt
 expes/checkpoints/*
 checkpoints/*
 test.ipynb
+wandb

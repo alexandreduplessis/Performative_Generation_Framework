@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import os
+import wandb
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import argparse
@@ -15,6 +16,7 @@ from perfgen.argparse import my_parser
 
 
 if __name__ == "__main__":
+    wandb.login()
     date_str = time.strftime("%Y%m%d-%H%M%S")
     args = my_parser()
     nb_samples = args.nb_samples
@@ -49,6 +51,24 @@ if __name__ == "__main__":
         model = BNAFlow(args.device)
     else:
         raise NotImplementedError
+    
+    run = wandb.init(
+    project="Performative_Generation_Framework",
+    config={
+        "nb_iters": args.nb_iters,
+        "nb_samples": args.nb_samples,
+        "data": args.data,
+        "prop_old": args.prop_old,
+        "nb_new": args.nb_new,
+        "checkpoint_freq": args.checkpoint_freq,
+        "checkpoint_nb_gen": args.checkpoint_nb_gen,
+        "exp_path": args.path,
+        "model": args.model,
+        "reset": args.reset
+    },
+    name=args.exp_name
+    )
+
 
     prop_old_schedule = np.array([1.] + [args.prop_old] * nb_iters)
     nb_new_schedule = [0] + [args.nb_new] * nb_iters

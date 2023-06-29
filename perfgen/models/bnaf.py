@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from perfgen.utils import wasserstein_distance
 import torch
+import wandb
 from torch import nn
 from torch import optim
 
@@ -66,6 +67,7 @@ class BNAFlow():
                 if torch.isfinite(grad_norm):
                     optimizer.step()
                 self.losses.append(loss_sum)
+                wandb.log({'loss': loss_sum})
                 optimizer.step()
                 optimizer.zero_grad()
                 scheduler.step(loss)

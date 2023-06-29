@@ -19,6 +19,7 @@ def my_parser():
     parser.add_argument('--epochs', type=int, default=-1, help='Number of epochs')
     parser.add_argument('--device', type=str, default='None', help='Device to use')
     parser.add_argument('--last_run', type=bool, default=False, help="Use the last experiment's arguments")
+    parser.add_argument('--exp_name', type=str, default="", help='Name of the experiment')
 
     args = parser.parse_args()
 
@@ -36,6 +37,8 @@ def my_parser():
         with open('./runs/last_run.json', 'w') as f:
             json.dump(args_dict, f, indent=4)
 
+    if args.exp_name == "":
+        args.exp_name = time.strftime("%Y%m%d-%H%M%S")
 
     if args.device == 'None':
         args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
