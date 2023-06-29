@@ -1,5 +1,6 @@
 import argparse
 import time
+import torch
 
 
 def my_parser():
@@ -9,13 +10,24 @@ def my_parser():
     parser.add_argument('--nb_samples', type=int, default=100, help='Number of samples')
     parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
     parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
-    parser.add_argument('--nb_new', type=int, default=100, help='Number of new datapoints to generate')
+    parser.add_argument('--nb_new', type=int, default=1000, help='Number of new datapoints to generate')
     parser.add_argument('--checkpoint_freq', type=int, default=10, help='Frequency of checkpoints')
     parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
     parser.add_argument('--path', type=str, default="", help='Name of the experiment')
     parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
+    parser.add_argument('--epochs', type=int, default=10_000, help='Number of epochs')
+    parser.add_argument('--device', type=str, default='None', help='Device to use')
 
     args = parser.parse_args()
+
+    if args.device == 'None':
+        args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    if args.model == 'gmm':
+        args.epochs = 1
+    elif args.model == 'bnaf':
+        args.epochs = 20_000
+
     if args.path == "":
         args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters) + '/' + str(args.nb_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)
     else:

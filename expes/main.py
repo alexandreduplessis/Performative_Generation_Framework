@@ -9,6 +9,7 @@ from sklearn.utils import check_random_state
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
 from perfgen.generator import Performative_Generator
+from perfgen.models.bnaf import BNAFlow
 from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.argparse import my_parser
 
@@ -42,18 +43,19 @@ if __name__ == "__main__":
     if args.model == 'gmm':
         model = Gaussian_Mixture_Model(
             n_gaussians=50, dim=2, rng=rng)
-        epochs_schedule = [1] * nb_iters
     elif args.model == 'flow':
-        model = Normalizing_Flow()
-        epochs_schedule = [100] * nb_iters
+        model = Normalizing_Flow(args.device)
+    elif args.model == 'bnaf':
+        model = BNAFlow(args.device)
     else:
         raise NotImplementedError
 
     prop_old_schedule = np.array([1.] + [args.prop_old] * nb_iters)
     nb_new_schedule = [0] + [args.nb_new] * nb_iters
     eval_schedule = np.arange(0, nb_iters, 1)
+    epochs_schedule = [args.epochs] * nb_iters
 
-    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset)
+    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
     metrics = performative_generator.train()
 
     np.save(args.path + '/metrics.npy', metrics)

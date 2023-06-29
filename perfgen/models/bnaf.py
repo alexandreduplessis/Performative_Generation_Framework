@@ -1,50 +1,63 @@
 import torch
 import math
 import numpy as np
+from tqdm import tqdm
 from perfgen.utils import wasserstein_distance
 import torch
 from torch import nn
 from torch import optim
 
 
-class BNAF():
+class BNAFlow():
     """
     Block Neural Autoregressive Normalizing Flow
     """
     def __init__(
-            self, num_layers = 3, dim=2, hidden_dim=50):
+            self, device='cpu'):
+        
+        self.n_flows = 1
+        self.hidden_dim = 50
+        self.device = device
+        self.n_layers = 3
+        self.batch_size = 128
 
-        self.num_layers = num_layers
-        self.dim = dim
-        self.hidden_dim = hidden_dim
-
-        print("Creating BNAF model..")
-        self.flow = create_model(args, self.num_layers, hidden_dim, verbose=True)
+        self.flow = create_model(self.n_flows, self.hidden_dim, self.n_layers)
 
         self.losses = []
-        self.name = f'{self.num_layers}-layers Normalizing Flow'
+        self.name = "BNAF"
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
         self.max_gradient_norm = 1
 
     def compute_log_p_x(self, x_mb):
-	y_mb, log_diag_j_mb = self.flow(x_mb)
-	log_p_y_mb = (
-	    torch.distributions.Normal(torch.zeros_like(y_mb), torch.ones_like(y_mb))
-	    .log_prob(y_mb)
-	    .sum(-1)
-	)
-	return log_p_y_mb + log_diag_j_mb
+        y_mb, log_diag_j_mb = self.flow(x_mb)
+        log_p_y_mb = (
+            torch.distributions.Normal(torch.zeros_like(y_mb), torch.ones_like(y_mb))
+            .log_prob(y_mb)
+            .sum(-1)
+        )
+        return log_p_y_mb + log_diag_j_mb
 
     def train(self, data, epochs=100):
-        dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
-        optimizer = optim.Adam(self.flow.parameters())
+        dataloader = torch.utils.data.DataLoader(data, batch_size=self.batch_size, shuffle=True)
+        optimizer = torch.optim.Adam(
+            self.flow.parameters(), lr=1e-1, amsgrad=True
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            factor=.5,
+            patience=2000,
+            min_lr=5e-4,
+            verbose=True,
+            threshold_mode="abs",
+        )
+        self.flow.to(self.device)
         self.losses = []
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             loss_sum = 0
             for x in dataloader:
-                optimizer.zero_grad()
-                loss = -self.flow.log_prob(inputs=x).mean()
+                x = x.to(self.device)
+                loss = -self.compute_log_p_x(x).mean()
                 loss.backward()
                 grad_norm = torch.nn.utils.clip_grad_norm_(
                     self.flow.parameters(),
@@ -53,16 +66,27 @@ class BNAF():
                 if torch.isfinite(grad_norm):
                     optimizer.step()
                 self.losses.append(loss_sum)
+                optimizer.step()
+                optimizer.zero_grad()
+                scheduler.step(loss)
         self.losses = torch.tensor(self.losses)
+        self.flow.to('cpu')
         return self.losses
 
+
     def generate(self, nb_samples, save_path=None):
-        if nb_samples == 0:
-            return torch.tensor([])
-        samples = self.flow(nb_samples).detach()
-        if save_path is not None:
-            # torch save
-            torch.save(samples, save_path)
+        with torch.no_grad():
+            if nb_samples == 0:
+                return torch.tensor([])
+            d_mb = torch.distributions.Normal(
+            torch.zeros((nb_samples, 2)),
+            torch.ones((nb_samples, 2)),
+            )
+            y_mb = d_mb.sample()
+            samples, log_diag_j_mb = self.flow(y_mb)
+            if save_path is not None:
+                # torch save
+                torch.save(samples, save_path)
         return samples
 
     def eval(self, data, **kwargs):
@@ -77,7 +101,7 @@ class BNAF():
             return metrics
 
     def log_prob(self, data):
-        return self.flow.compute_log_p_x(data)
+        return self.compute_log_p_x(data)
 
     def load(self, path):
         self.flow.load_state_dict(torch.load(path))
@@ -88,68 +112,32 @@ class BNAF():
     def reset(self):
         raise NotImplementedError
 
-def create_model(args, verbose=False):
+def create_model(n_flows, hidden_dim, n_layers):
 
     flows = []
-    for f in range(args.flows):
+    for f in range(n_flows):
         layers = []
-        for _ in range(args.layers - 1):
-            layers.append(MaskedWeight(2 * args.hidden_dim, 2 * args.hidden_dim, dim=2))
+        for _ in range(n_layers - 1):
+            layers.append(MaskedWeight(2 * hidden_dim, 2 * hidden_dim, dim=2))
             layers.append(Tanh())
 
         flows.append(
             BNAF(
                 *(
-                    [MaskedWeight(2, 2 * args.hidden_dim, dim=2), Tanh()]
+                    [MaskedWeight(2, 2 * hidden_dim, dim=2), Tanh()]
                     + layers
-                    + [MaskedWeight(2 * args.hidden_dim, 2, dim=2)]
+                    + [MaskedWeight(2 * hidden_dim, 2, dim=2)]
                 ),
-                res="gated" if f < args.flows - 1 else False
+                res="gated" if f < n_flows - 1 else False
             )
         )
 
-        if f < args.flows - 1:
+        if f < n_flows - 1:
             flows.append(Permutation(2, "flip"))
 
-    model = Sequential(*flows).to(args.device)
-
-    if verbose:
-        print("{}".format(model))
-        print(
-            "Parameters={}, n_dims={}".format(
-                sum(
-                    (p != 0).sum() if len(p.shape) > 1 else torch.tensor(p.shape).item()
-                    for p in model.parameters()
-                ),
-                2,
-            )
-        )
+    model = Sequential(*flows)
 
     return model
-
-class Sequential(torch.nn.Sequential):
-    """
-    Class that extends ``torch.nn.Sequential`` for computing the output of
-    the function alongside with the log-det-Jacobian of such transformation.
-    """
-
-    def forward(self, inputs: torch.Tensor):
-        """
-        Parameters
-        ----------
-        inputs : ``torch.Tensor``, required.
-            The input tensor.
-        Returns
-        -------
-        The output tensor and the log-det-Jacobian of this transformation.
-        """
-
-        log_det_jacobian = 0.0
-        for i, module in enumerate(self._modules.values()):
-            inputs, log_det_jacobian_ = module(inputs)
-            log_det_jacobian = log_det_jacobian + log_det_jacobian_
-        return inputs, log_det_jacobian
-
 
 class BNAF(torch.nn.Sequential):
     """
@@ -211,6 +199,29 @@ class BNAF(torch.nn.Sequential):
 
     def _get_name(self):
         return "BNAF(res={})".format(self.res)
+
+class Sequential(torch.nn.Sequential):
+    """
+    Class that extends ``torch.nn.Sequential`` for computing the output of
+    the function alongside with the log-det-Jacobian of such transformation.
+    """
+
+    def forward(self, inputs: torch.Tensor):
+        """
+        Parameters
+        ----------
+        inputs : ``torch.Tensor``, required.
+            The input tensor.
+        Returns
+        -------
+        The output tensor and the log-det-Jacobian of this transformation.
+        """
+
+        log_det_jacobian = 0.0
+        for i, module in enumerate(self._modules.values()):
+            inputs, log_det_jacobian_ = module(inputs)
+            log_det_jacobian = log_det_jacobian + log_det_jacobian_
+        return inputs, log_det_jacobian
 
 
 class Permutation(torch.nn.Module):

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from perfgen.argparse import my_parser
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
+from perfgen.models.bnaf import BNAFlow
 from tqdm import tqdm
 
 LOW = -4
@@ -36,10 +37,12 @@ if args.model == 'gmm':
         n_gaussians=n_gaussians, dim=2)
 elif args.model == 'flow':
     model = Normalizing_Flow()
+elif args.model == 'bnaf':
+    model = BNAFlow()
 else:
     raise NotImplementedError
 
-n_plots = 10  # TODO read automatically
+n_plots = 2  # TODO read automatically
 indices = np.arange(0, n_plots) * args.checkpoint_freq
 assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
@@ -50,5 +53,5 @@ for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
     plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title(str(idx_checkpoint))
 
-plt.savefig(args.path + "/fig.pdf")
-# plt.show()
+# plt.savefig(args.path + "/fig.pdf")
+plt.show()

@@ -1,5 +1,6 @@
 import numpy as np
 from perfgen.utils import wasserstein_distance
+from tqdm import tqdm
 import torch
 from torch import nn
 from torch import optim
@@ -14,9 +15,10 @@ class Normalizing_Flow():
     Normalizing Flow
     """
     def __init__(
-            self, num_layers = 5, dim=2):
+            self, device='cpu', num_layers = 5, dim=2):
         self.num_layers = num_layers
         self.dim = dim
+        self.device = device
         base_dist = StandardNormal(shape=[self.dim])
 
         transforms = []
@@ -35,12 +37,14 @@ class Normalizing_Flow():
         self.max_gradient_norm = 1
 
     def train(self, data, epochs=10_000):
+        self.flow.to(self.device)
         dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
         optimizer = optim.Adam(self.flow.parameters())
         self.losses = []
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             loss_sum = 0
             for x in dataloader:
+                x = x.to(self.device)
                 optimizer.zero_grad()
                 loss = -self.flow.log_prob(inputs=x).mean()
                 loss.backward()
@@ -52,6 +56,7 @@ class Normalizing_Flow():
                     optimizer.step()
                 self.losses.append(loss_sum)
         self.losses = torch.tensor(self.losses)
+        self.flow.to('cpu')
         return self.losses
 
     def generate(self, nb_samples, save_path=None):

@@ -30,7 +30,7 @@ class Performative_Generator():
     eval_datas : array
         Dataset on which to evaluate the model
     """
-    def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, eval_data=None):
+    def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, device, eval_data=None):
         self.model = model
         self.data = data
         self.old_data = data.clone()
@@ -44,6 +44,7 @@ class Performative_Generator():
         self.checkpoint_nb_gen = checkpoint_nb_gen
         self.exp_name = exp_name
         self.reset = reset
+        self.device = device
 
 
     def train(self):
@@ -57,10 +58,11 @@ class Performative_Generator():
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
             nb_new = self.nb_new_schedule[i]
             data_to_train = mix_data(self.old_data[:nb_old], self.model.generate(nb_new).reshape((nb_new, self.old_data.shape[1])))
-            self.data = data_to_train.clone() # not useful
+            self.data = data_to_train.clone()
 
             # Train model
             losses = self.model.train(data_to_train, self.epochs_schedule[i])
+            
             # Save model
             if i % self.checkpoint_freq == 0:
                 self.model.save_model(
