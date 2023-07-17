@@ -6,7 +6,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 
 def plt_density(
-        model, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4, plt_name = "Default"):   
+        model, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4, plt_name = "Default"):
     side = np.linspace(LOW, HIGH, npts)
     xx, yy = np.meshgrid(side, side)
     z = np.hstack([xx.reshape(-1, 1), yy.reshape(-1, 1)])
@@ -23,3 +23,12 @@ def plt_density(
     plt.gcf().set_size_inches(5, 5)
     # plt.set_title(title)
     wandb.log({plt_name: plt})
+
+def plot_samples(
+        gen_samples, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4, plt_name = "Default"):
+    plt.scatter(gen_samples[:, 0], gen_samples[:, 1], alpha=0.5, s=15)
+    plt.axis('off')
+    # set size
+    plt.gcf().set_size_inches(5, 5)
+    # plt.set_title(title)
+    wandb.log({plt_name: wandb.Image(plt)})

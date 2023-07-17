@@ -9,6 +9,7 @@ import time
 from sklearn.utils import check_random_state
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
+from perfgen.models.simple_diffusion import SimpleDiffusion
 from perfgen.generator import Performative_Generator
 from perfgen.models.bnaf import BNAFlow
 from perfgen.datasets.toy_data import sample_2d_data
@@ -49,6 +50,8 @@ def main():
         model = Normalizing_Flow(args.device)
     elif args.model == 'bnaf':
         model = BNAFlow(args.device)
+    elif args.model == 'simplediff':
+        model = SimpleDiffusion(args.device)
     else:
         raise NotImplementedError
 

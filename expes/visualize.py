@@ -8,10 +8,17 @@ from perfgen.argparse import my_parser
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
 from perfgen.models.bnaf import BNAFlow
+from perfgen.models.simple_diffusion import SimpleDiffusion
 from tqdm import tqdm
 
+def plot_samples(
+        gen_samples, ax, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4):
+    ax.scatter(gen_samples[:, 0], gen_samples[:, 1], alpha=0.5, s=15)
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
+    ax.set_title(title)
 
-
+# TODO: Model Forward Pass Should be on CUDA
 def plt_density(
         model, ax, npts=100, memory=100, title="$q(x)$", device="cpu", LOW = -4, HIGH = 4):
     side = np.linspace(LOW, HIGH, npts)
@@ -40,6 +47,8 @@ elif args.model == 'flow':
     model = Normalizing_Flow()
 elif args.model == 'bnaf':
     model = BNAFlow()
+elif args.model == 'simplediff':
+    model = SimpleDiffusion()
 else:
     raise NotImplementedError
 
@@ -67,8 +76,12 @@ fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
 
 for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
     model.load(args.path + '/' + "model_" + str(idx_checkpoint))
-    print(model.generate(1000).std())
-    plt_density(model, axs[idx_arr])
+    gen_samples = model.generate(1000)
+    print(gen_samples.std())
+    if args.model == 'simplediff':
+        plt_samples(gen_samples, axs[idx_arr])
+    else:
+        plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title(str(idx_checkpoint))
 
 # plt.savefig(args.path + "/fig.pdf")

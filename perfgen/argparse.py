@@ -63,6 +63,8 @@ def my_parser():
             # args.epochs = 20_000
         elif args.model == 'flow':
             args.epochs = 100
+        elif args.model == 'simplediff':
+            args.epochs = 200
 
 
     if args.path == "":

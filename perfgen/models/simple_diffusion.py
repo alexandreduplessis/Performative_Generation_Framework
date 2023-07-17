@@ -10,9 +10,7 @@ from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
-import datasets
-import normflows as nf
-import pdb
+import ipdb
 
 # Code taken from https://github.com/tanelp/tiny-diffusion/tree/master
 class SinusoidalEmbedding(nn.Module):
@@ -173,13 +171,6 @@ class NoiseScheduler():
         self.posterior_mean_coef1 = self.betas * torch.sqrt(self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
         self.posterior_mean_coef2 = (1. - self.alphas_cumprod_prev) * torch.sqrt(self.alphas) / (1. - self.alphas_cumprod)
 
-        # Base Dist for Reward Interpolation
-        #self.base_dist = nf.distributions.base.DiagGaussian(2).cuda()
-        # Hard code the bounds of the energy
-        self.base_dist = nf.distributions.base.Uniform(2, low=-10.0, high=10.0).cuda()
-        self.linear_interp = torch.linspace(
-                0.1, 1.0, num_timesteps, dtype=torch.float32).cuda()
-
     def reconstruct_x0(self, x_t, t, noise):
         s1 = self.sqrt_inv_alphas_cumprod[t]
         s2 = self.sqrt_inv_alphas_cumprod_minus_one[t]
@@ -215,38 +206,6 @@ class NoiseScheduler():
 
         pred_prev_sample = pred_prev_sample + variance
 
-        return pred_prev_sample
-
-    def reward_interpolation(self, target_energy, samples, timestep):
-        #pdb.set_trace()
-        curr_timestep = self.linear_interp[timestep]
-        base_energy = self.base_dist.log_prob(samples)
-        reward_t = (1 - curr_timestep)*base_energy + curr_timestep * target_energy
-        return reward_t
-
-    def cond_step(self, model_output, reward_model, timestep, sample, guidance_weight=1.0):
-        t = timestep
-        pred_original_sample = self.reconstruct_x0(sample, t, model_output)
-        pred_prev_sample = self.q_posterior(pred_original_sample, sample, t)
-        with torch.enable_grad():
-            pred_prev_sample.requires_grad_()
-            #unnorm_pred_prev_sample = (pred_prev_sample * r_std) + r_mean
-            # reward = reward_model(unnorm_pred_prev_sample)
-
-            reward = reward_model(pred_prev_sample)
-            #reward = self.reward_interpolation(reward, pred_prev_sample, timestep) # We sum because we need scalars
-            grad = torch.autograd.grad(reward.sum(), [pred_prev_sample])[0]
-
-            pred_prev_sample.detach()
-
-        variance = 0
-        noise = torch.randn_like(model_output)
-        if t > 0:
-            variance = (self.get_variance(t) ** 0.5)
-
-        pred_prev_sample = pred_prev_sample + variance * noise - grad * variance * guidance_weight
-        #print("Max %f and Min %f" %(pred_prev_sample.max(), pred_prev_sample.min()))
-        #return torch.clamp(pred_prev_sample, min=-1., max=1.)
         return pred_prev_sample
 
     def add_noise(self, x_start, x_noise, timesteps):
@@ -299,53 +258,54 @@ class SimpleDiffusion():
                                     'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
         self.max_gradient_norm = 1
 
-    def train(self, data, num)epochs=200):
-	global_step = 0
-	frames = []
-	losses = []
-        optimizer = torch.optim.AdamW(
-                self.diff_model.parameters())
+    def train(self, data, num_epochs=200):
+        global_step = 0
+        frames = []
+        losses = []
+        optimizer = torch.optim.AdamW(self.diff_model.parameters())
+        dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
 
-	print("Training model...")
+        print("Training model...")
         progress_bar = tqdm(total=num_epochs)
-	for epoch in range(num_epochs):
-	    self.diff_model.train()
-	    progress_bar.set_description(f"Epoch {epoch}")
-	    for step, (unnorm_batch, reward, indices) in enumerate(dataset):
-		batch = normalize_batch(unnorm_batch, mins,
-                        maxs).to(self.device)
-		noise = torch.randn(batch.shape).cuda()
-		timesteps = torch.randint(
-		    0, noise_scheduler.num_timesteps, (batch.shape[0],)
-		).long().to(self.device)
+        for epoch in range(num_epochs):
+            self.diff_model.train()
+            progress_bar.set_description(f"Epoch {epoch}")
+            for x in dataloader:
+                x = x.to(self.device)
+                batch = x.to(self.device)
+                noise = torch.randn(batch.shape).to(self.device)
+                timesteps = torch.randint(
+                    0, self.noise_scheduler.num_timesteps, (batch.shape[0],)
+                ).long().to(self.device)
 
-		noisy = self.noise_scheduler.add_noise(batch, noise, timesteps)
-		noise_pred = self.diff_model(noisy, timesteps)
-		loss = F.mse_loss(noise_pred, noise)
-		optimizer.zero_grad()
+                noisy = self.noise_scheduler.add_noise(batch, noise, timesteps)
+                noise_pred = self.diff_model(noisy, timesteps)
+                loss = F.mse_loss(noise_pred, noise)
+                optimizer.zero_grad()
 
-		if not torch.isnan(loss) and not torch.isinf(loss):
-		    loss.backward()
-		    nn.utils.clip_grad_norm_(self.diff_model.parameters(), 1.0)
-		    optimizer.step()
-		else:
-		    print("nan loss in non-replay step")
+                if not torch.isnan(loss) and not torch.isinf(loss):
+                    loss.backward()
+                    nn.utils.clip_grad_norm_(self.diff_model.parameters(), 1.0)
+                    optimizer.step()
+                else:
+                    print("nan loss in non-replay step")
 
-		progress_bar.update(1)
-		logs = {"loss": loss.detach().item(), "step": global_step}
-		losses.append(loss.detach().item())
-		progress_bar.set_postfix(**logs)
-		global_step += 1
-	    progress_bar.close()
+                progress_bar.update(1)
+                logs = {"loss": loss.detach().item(), "step": global_step}
+                losses.append(loss.detach().item())
+                progress_bar.set_postfix(**logs)
+                global_step += 1
+            progress_bar.close()
 
-        self.losses = torch.tensor(losses)
-	return self.losses
+            self.losses = torch.tensor(losses)
+            return self.losses
 
     def generate(self, nb_samples, save_path=None):
+        if nb_samples == 0:
+            return torch.tensor([])
         self.diff_model.eval()
-        noise_scheduler = NoiseScheduler(
-            num_timesteps=self.num_timesteps,
-            beta_schedule=self.beta_schedule)
+        noise_scheduler = NoiseScheduler(num_timesteps=self.num_timesteps,
+                beta_schedule=self.beta_schedule)
 
         sample = torch.randn(nb_samples, 2).to(self.device)
         timesteps = list(range(len(noise_scheduler)))[::-1]
@@ -355,7 +315,7 @@ class SimpleDiffusion():
         plot_step = 50
         for i, t in enumerate(timesteps):
             t = torch.from_numpy(np.repeat(t,
-                eval_batch_size)).long().to(self.device)
+                nb_samples)).long().to(self.device)
             with torch.no_grad():
                 residual = self.diff_model(sample, t)
             sample = noise_scheduler.step(residual, t[0], sample)
@@ -367,10 +327,8 @@ class SimpleDiffusion():
             metrics = {}
             # compute the std and mean of the data, taking weights into account
             data_gen = self.generate(len(data))
-            model_std = torch.std(data_gen, dim=0)
+            model_std = torch.std(data_gen, dim=0).cpu()
             metrics['std'] = torch.norm(model_std)
-            metrics['wasserstein'] = wasserstein_distance(data, data_gen)
-            metrics['nll'] = - self.log_prob(data).mean(axis=-1).detach().numpy()
             return metrics
 
     def log_prob(self, data):
