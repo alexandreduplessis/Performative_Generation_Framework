@@ -228,7 +228,7 @@ class SimpleDiffusion():
     def __init__(
             self, device='cpu', num_layers = 5, dim=2, hidden_size=128,
             embedding_size=128, time_embedding='sinusoidal',
-            input_embedding='sinusoidal', num_timesteps=150, beta_schedule='linear'):
+            input_embedding='sinusoidal', num_timesteps=250, beta_schedule='linear'):
 
         self.num_layers = num_layers
         self.dim = dim
@@ -263,7 +263,9 @@ class SimpleDiffusion():
         frames = []
         losses = []
         optimizer = torch.optim.AdamW(self.diff_model.parameters())
-        dataloader = torch.utils.data.DataLoader(data, batch_size=128, shuffle=True)
+        normalized_data, self.mins, self.maxs = self.normalize_dataset(data)
+        dataloader = torch.utils.data.DataLoader(
+            normalized_data, batch_size=128, shuffle=True)
 
         print("Training model...")
         progress_bar = tqdm(total=num_epochs)
@@ -304,11 +306,8 @@ class SimpleDiffusion():
         if nb_samples == 0:
             return torch.tensor([])
         self.diff_model.eval()
-        noise_scheduler = NoiseScheduler(num_timesteps=self.num_timesteps,
-                beta_schedule=self.beta_schedule)
-
         sample = torch.randn(nb_samples, 2).to(self.device)
-        timesteps = list(range(len(noise_scheduler)))[::-1]
+        timesteps = list(range(len(self.noise_scheduler)))[::-1]
         frames = []
         samples = []
         steps = []
@@ -318,9 +317,9 @@ class SimpleDiffusion():
                 nb_samples)).long().to(self.device)
             with torch.no_grad():
                 residual = self.diff_model(sample, t)
-            sample = noise_scheduler.step(residual, t[0], sample)
+            sample = self.noise_scheduler.step(residual, t[0], sample)
         self.diff_model.train()
-        return sample
+        return self.unnormalize_dataset(sample.detach(), self.mins, self.maxs)
 
     def eval(self, data, **kwargs):
         with torch.no_grad():
@@ -353,3 +352,17 @@ class SimpleDiffusion():
 
         self.flow = Flow(transform, base_dist)
 
+
+    def normalize_dataset(self, dataset):
+        # Normalize data range to [-1, 1] (Assumes min and max data values
+        mins = dataset.min(dim=0)[0]
+        maxs = dataset.max(dim=0)[0]
+        normalized_dataset = (dataset - mins) / (maxs - mins +1e-5)
+        normalized_dataset = normalized_dataset * 2 - 1
+        print("Max Value %f | Min Value %f" % (normalized_dataset.max(), normalized_dataset.min()))
+        return normalized_dataset, mins.to(self.device), maxs.to(self.device)
+
+    def unnormalize_dataset(self, normalized_dataset, mins, maxs):
+        normalized_dataset = (normalized_dataset + 1) / 2
+        dataset = normalized_dataset * (maxs - mins) + mins
+        return dataset

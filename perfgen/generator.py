@@ -59,12 +59,13 @@ class Performative_Generator():
             # Generate data to train
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
             nb_new = self.nb_new_schedule[i]
-            data_to_train = mix_data(self.old_data[:nb_old], self.model.generate(nb_new).reshape((nb_new, self.old_data.shape[1])))
+            data_to_train = mix_data(
+                self.old_data[:nb_old],
+                self.model.generate(nb_new).reshape((nb_new, self.old_data.shape[1])).cpu())
             self.data = data_to_train.clone()
 
             # Train model
             losses = self.model.train(data_to_train, self.epochs_schedule[i])
-
             # Save model
             if i % self.checkpoint_freq == 0:
                 self.model.save_model(
@@ -86,7 +87,8 @@ class Performative_Generator():
                         wandb.log({"old"+str(keys): new_metrics[keys]})
 
                 if ('Diff' in str(self.model)):
-                    plot_samples(gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
+                    plot_samples(
+                        self.old_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
                 else:
                     plt_density(self.model, plt_name=f"density_{i}.png")
 

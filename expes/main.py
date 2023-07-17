@@ -15,7 +15,6 @@ from perfgen.models.bnaf import BNAFlow
 from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.argparse import my_parser
 
-# @profile
 def main():
     wandb.login()
     date_str = time.strftime("%Y%m%d-%H%M%S")
@@ -78,7 +77,8 @@ def main():
     eval_schedule = np.arange(0, nb_iters, 1)
     epochs_schedule = [args.epochs] * nb_iters
 
-    performative_generator = Performative_Generator(model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
+    performative_generator = Performative_Generator(
+        model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
     metrics = performative_generator.train()
 
     np.save(args.path + '/metrics.npy', metrics)
