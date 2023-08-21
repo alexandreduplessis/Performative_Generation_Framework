@@ -16,7 +16,7 @@ class Gaussian_Estimator_1D():
     train(data, epochs)
         Train the model (epochs is not used here)
         Returns the train loss (here not used)
-    generate(nb_samples)
+    generate(n_samples)
         Generate new data
     eval(data, **kwargs)
         Evaluate the model on data with given metrics
@@ -39,8 +39,8 @@ class Gaussian_Estimator_1D():
         self.losse = np.array(self.losses)
         return self.losses
 
-    def generate(self, nb_samples):
-        return np.random.normal(self.mu, self.sigma, nb_samples)
+    def generate(self, n_samples):
+        return np.random.normal(self.mu, self.sigma, n_samples)
 
     def eval(self, data, **kwargs):
         metrics = {}

@@ -19,7 +19,7 @@ class Gaussian_Mixture_Model_1D():
     train(data, epochs)
         Train the model (epochs is not used here)
         Returns the train loss (here not used)
-    generate(nb_samples)
+    generate(n_samples)
         Generate new data
     eval(data, **kwargs)
         Evaluate the model on data with given metrics
@@ -54,9 +54,9 @@ class Gaussian_Mixture_Model_1D():
         self.losses = np.array(self.losses)
         return self.losses
 
-    def generate(self, nb_samples):
+    def generate(self, n_samples):
         samples = []
-        for _ in range(nb_samples):
+        for _ in range(n_samples):
             i = np.random.choice(self.nb, p=self.weights)
             new_sample = np.random.normal(self.mus[i], self.sigmas[i])
             samples.append(new_sample.item())

@@ -15,7 +15,7 @@ class BNAFlow():
     """
     def __init__(
             self, device='cpu'):
-        
+
         self.n_flows = 1
         self.hidden_dim = 50
         self.device = device
@@ -76,13 +76,13 @@ class BNAFlow():
         return self.losses
 
 
-    def generate(self, nb_samples, save_path=None):
+    def generate(self, n_samples, save_path=None):
         with torch.no_grad():
-            if nb_samples == 0:
+            if n_samples == 0:
                 return torch.tensor([])
             d_mb = torch.distributions.Normal(
-            torch.zeros((nb_samples, 2)),
-            torch.ones((nb_samples, 2)),
+            torch.zeros((n_samples, 2)),
+            torch.ones((n_samples, 2)),
             )
             y_mb = d_mb.sample()
             samples, log_diag_j_mb = self.flow(y_mb)
@@ -417,5 +417,3 @@ class Tanh(torch.nn.Tanh):
             torch.tanh(inputs),
             (g.view(grad.shape) + grad) if grad is not None else g,
         )
-
-

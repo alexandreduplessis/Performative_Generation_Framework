@@ -19,7 +19,7 @@ def main():
     wandb.login()
     date_str = time.strftime("%Y%m%d-%H%M%S")
     args = my_parser()
-    nb_samples = args.nb_samples
+    n_samples = args.n_samples
 
     rng = check_random_state(0)
     if not os.path.exists(args.path):
@@ -27,8 +27,8 @@ def main():
 
     info = {}
     info['date'] = date_str
-    info['nb_iters'] = args.nb_iters
-    info['nb_samples'] = args.nb_samples
+    info['n_retrain'] = args.n_retrain
+    info['n_samples'] = args.n_samples
     info['data'] = args.data
     info['prop_old'] = args.prop_old
     info['nb_new'] = args.nb_new
@@ -40,8 +40,8 @@ def main():
 
     np.save(args.path + '/info.npy', info)
 
-    data = sample_2d_data(args.data, nb_samples, rng)
-    nb_iters = args.nb_iters
+    data = sample_2d_data(args.data, n_samples, rng)
+    n_retrain = args.n_retrain
     if args.model == 'gmm':
         model = Gaussian_Mixture_Model(
             n_gaussians=50, dim=2, rng=rng)
@@ -57,8 +57,8 @@ def main():
     run = wandb.init(
     project="Performative_Generation_Framework",
     config={
-        "nb_iters": args.nb_iters,
-        "nb_samples": args.nb_samples,
+        "n_retrain": args.n_retrain,
+        "n_samples": args.n_samples,
         "data": args.data,
         "prop_old": args.prop_old,
         "nb_new": args.nb_new,
@@ -72,13 +72,13 @@ def main():
     )
 
 
-    prop_old_schedule = np.array([1.] + [args.prop_old] * nb_iters)
-    nb_new_schedule = [0] + [args.nb_new] * nb_iters
-    eval_schedule = np.arange(0, nb_iters, 1)
-    epochs_schedule = [args.epochs] * nb_iters
+    prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
+    nb_new_schedule = [0] + [args.nb_new] * n_retrain
+    eval_schedule = np.arange(0, n_retrain, 1)
+    epochs_schedule = [args.n_epochs] * n_retrain
 
     performative_generator = Performative_Generator(
-        model=model, data=data, nb_iters=nb_iters, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
+        model=model, data=data, n_retrain=n_retrain, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
     metrics = performative_generator.train()
 
     np.save(args.path + '/metrics.npy', metrics)

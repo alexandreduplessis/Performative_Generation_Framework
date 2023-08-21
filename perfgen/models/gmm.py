@@ -23,7 +23,7 @@ class Gaussian_Mixture_Model():
     train(data, epochs)
         Train the model (epochs is not used here)
         Returns the train loss (here not used)
-    generate(nb_samples)
+    generate(n_samples)
         Generate new data
     eval(data, **kwargs)
         Evaluate the model on data with given metrics
@@ -68,9 +68,9 @@ class Gaussian_Mixture_Model():
     def get_theta(self):
         return {'mus': self.mus, 'sigmas': self.sigmas, 'weights': self.weights, 'precision_cholesky_': self.precision_cholesky_}
 
-    def generate(self, nb_samples, save_path=None):
+    def generate(self, n_samples, save_path=None):
         samples = []
-        for _ in range(nb_samples):
+        for _ in range(n_samples):
             i = self.rng.choice(self.n_gaussians, p=self.weights)
             new_sample = self.rng.multivariate_normal(self.mus[i], self.sigmas[i])
             samples.append(new_sample)

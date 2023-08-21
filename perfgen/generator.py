@@ -15,11 +15,11 @@ class Performative_Generator():
         Model to train and generate data
         model is assumed to have
             - a train method of the form model.train(data, epochs, **kwargs)
-            - a generate method of the form model.generate(nb_samples, **kwargs)
+            - a generate method of the form model.generate(n_samples, **kwargs)
             - an eval method of the form model.eval(data, **kwargs) that returns a dictionary of metrics
     data : array
         Old data
-    nb_iters : int
+    n_retrain : int
         Number of iterations
     prop_old_schedule : array
         Proportion of old data at each iteration
@@ -32,11 +32,11 @@ class Performative_Generator():
     eval_datas : array
         Dataset on which to evaluate the model
     """
-    def __init__(self, model, data, nb_iters, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, device, eval_data=None):
+    def __init__(self, model, data, n_retrain, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, device, eval_data=None):
         self.model = model
         self.data = data
         self.old_data = data.clone()
-        self.nb_iters = nb_iters
+        self.n_retrain = n_retrain
         self.prop_old_schedule = prop_old_schedule
         self.nb_new_schedule = nb_new_schedule
         self.epochs_schedule = epochs_schedule
@@ -53,7 +53,7 @@ class Performative_Generator():
         metrics = {}
         metrics['indices'] = self.eval_schedule
         theta = {}
-        for i in tqdm(range(self.nb_iters)):
+        for i in tqdm(range(self.n_retrain)):
             if self.reset:
                 self.model.reset()
             # Generate data to train

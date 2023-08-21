@@ -61,10 +61,10 @@ class Normalizing_Flow():
         self.flow.to('cpu')
         return self.losses
 
-    def generate(self, nb_samples, save_path=None):
-        if nb_samples == 0:
+    def generate(self, n_samples, save_path=None):
+        if n_samples == 0:
             return torch.tensor([])
-        samples = self.flow.sample(nb_samples).detach()
+        samples = self.flow.sample(n_samples).detach()
         if save_path is not None:
             # torch save
             torch.save(samples, save_path)

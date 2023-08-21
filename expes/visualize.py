@@ -55,8 +55,8 @@ else:
 run = wandb.init(
     project="Performative_Generation_Framework",
     config={
-        "nb_iters": args.nb_iters,
-        "nb_samples": args.nb_samples,
+        "n_retrain": args.n_retrain,
+        "n_samples": args.n_samples,
         "data": args.data,
         "prop_old": args.prop_old,
         "nb_new": args.nb_new,

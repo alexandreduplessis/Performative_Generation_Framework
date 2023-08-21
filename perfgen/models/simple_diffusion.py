@@ -176,7 +176,7 @@ class SimpleDiffusion():
                 auto_normalize = False,
                 timesteps = 1000    # number of steps
             ).to(self.device)
-        
+
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
@@ -216,13 +216,14 @@ class SimpleDiffusion():
             self.losses = torch.tensor(losses)
         return self.losses
 
-    def generate(self, nb_samples, save_path=None):
-        if nb_samples == 0:
+    def generate(self, n_samples, save_path=None):
+        if n_samples == 0:
             return torch.tensor([])
         self.diffusion.model.eval()
-        sample = self.diffusion.sample(nb_samples)
+        sample = self.diffusion.sample(n_samples)
         self.diffusion.model.train()
-        return self.unnormalize_dataset(sample.detach(), self.mins, self.maxs)
+        result = self.unnormalize_dataset(sample.detach(), self.mins, self.maxs)
+        return result.reshape(-1, 2)
 
     def eval(self, data, **kwargs):
         with torch.no_grad():

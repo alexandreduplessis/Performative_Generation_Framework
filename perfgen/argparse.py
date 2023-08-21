@@ -7,8 +7,8 @@ import json
 def my_parser():
     parser = argparse.ArgumentParser(description='Performative Generator')
     parser.add_argument('--model', type=str, default='bnaf', help='Model to train and generate data')
-    parser.add_argument('--nb_iters', type=int, default=1, help='Number of iterations') # Warning: small values of nb_iters can be highly misleading when reading the results
-    parser.add_argument('--nb_samples', type=int, default=1000, help='Number of samples')
+    parser.add_argument('--n_retrain', type=int, default=1, help='Number of iterations') # Warning: few retraining can be misleading when reading the results
+    parser.add_argument('--n_samples', type=int, default=1000, help='Number of samples')
     parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
     parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
     parser.add_argument('--nb_new', type=int, default=-1, help='Number of new datapoints to generate')
@@ -16,7 +16,7 @@ def my_parser():
     parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
     parser.add_argument('--path', type=str, default="", help='Name of the experiment')
     parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
-    parser.add_argument('--epochs', type=int, default=-1, help='Number of epochs')
+    parser.add_argument('--n_epochs', type=int, default=-1, help='Number of epochs')
     parser.add_argument('--device', type=str, default='None', help='Device to use')
     parser.add_argument('--last_run', type=bool, default=False, help="Use the last experiment's arguments")
     parser.add_argument('--exp_name', type=str, default="", help='Name of the experiment')
@@ -53,22 +53,22 @@ def my_parser():
         args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if args.nb_new == -1:
-        args.nb_new = args.nb_samples
+        args.nb_new = args.n_samples
 
-    if args.epochs == -1:
+    if args.n_epochs == -1:
         if args.model == 'gmm':
-            args.epochs = 1
+            args.n_epochs = 1
         elif args.model == 'bnaf':
-            args.epochs = 1_000
-            # args.epochs = 20_000
+            args.n_epochs = 1_000
+            # args.n_epochs = 20_000
         elif args.model == 'flow':
-            args.epochs = 100
+            args.n_epochs = 100
         elif args.model == 'simplediff':
-            args.epochs = 200
+            args.n_epochs = 200
 
 
     if args.path == "":
-        args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.nb_iters) + '/' + str(args.nb_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)
+        args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.n_retrain) + '/' + str(args.n_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)
     else:
         args.path = args.path
 
