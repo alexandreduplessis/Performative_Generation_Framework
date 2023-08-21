@@ -6,7 +6,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-
+from perfgen.models.ddpm import GaussianDiffusion
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
@@ -120,6 +120,9 @@ class MLP(nn.Module):
         self.time_mlp = PositionalEmbedding(emb_size, time_emb).cuda()
         self.input_mlp1 = PositionalEmbedding(emb_size, input_emb, scale=25.0).cuda()
         self.input_mlp2 = PositionalEmbedding(emb_size, input_emb, scale=25.0).cuda()
+        self.channels = 1
+        self.self_condition = False
+        self.out_dim = 1
 
         concat_size = len(self.time_mlp.layer) + \
             len(self.input_mlp1.layer) + len(self.input_mlp2.layer)
@@ -129,97 +132,16 @@ class MLP(nn.Module):
         layers.append(nn.Linear(hidden_size, 2))
         self.joint_mlp = nn.Sequential(*layers).cuda()
 
-    def forward(self, x, t):
+    def forward(self, x, t, self_condition=False):
+        # Dims should be B x 2
+        x = x.squeeze()
         x1_emb = self.input_mlp1(x[:, 0])
         x2_emb = self.input_mlp2(x[:, 1])
         t_emb = self.time_mlp(t)
         x = torch.cat((x1_emb, x2_emb, t_emb), dim=-1)
         x = self.joint_mlp(x)
+        x = x.view(-1, 1, 1 , 2)
         return x
-
-
-class NoiseScheduler():
-    def __init__(self,
-                 num_timesteps=1000,
-                 beta_start=0.0001,
-                 beta_end=0.02,
-                 beta_schedule="linear"):
-
-        self.num_timesteps = num_timesteps
-        if beta_schedule == "linear":
-            self.betas = torch.linspace(
-                beta_start, beta_end, num_timesteps, dtype=torch.float32).cuda()
-        elif beta_schedule == "quadratic":
-            self.betas = torch.linspace(
-                beta_start ** 0.5, beta_end ** 0.5, num_timesteps, dtype=torch.float32).cuda() ** 2
-
-        self.alphas = 1.0 - self.betas
-        self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
-        self.alphas_cumprod_prev = F.pad(
-            self.alphas_cumprod[:-1], (1, 0), value=1.)
-
-        # required for self.add_noise
-        self.sqrt_alphas_cumprod = self.alphas_cumprod ** 0.5
-        self.sqrt_one_minus_alphas_cumprod = (1 - self.alphas_cumprod) ** 0.5
-
-        # required for reconstruct_x0
-        self.sqrt_inv_alphas_cumprod = torch.sqrt(1 / self.alphas_cumprod)
-        self.sqrt_inv_alphas_cumprod_minus_one = torch.sqrt(
-            1 / self.alphas_cumprod - 1)
-
-        # required for q_posterior
-        self.posterior_mean_coef1 = self.betas * torch.sqrt(self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
-        self.posterior_mean_coef2 = (1. - self.alphas_cumprod_prev) * torch.sqrt(self.alphas) / (1. - self.alphas_cumprod)
-
-    def reconstruct_x0(self, x_t, t, noise):
-        s1 = self.sqrt_inv_alphas_cumprod[t]
-        s2 = self.sqrt_inv_alphas_cumprod_minus_one[t]
-        s1 = s1.reshape(-1, 1)
-        s2 = s2.reshape(-1, 1)
-        return s1 * x_t - s2 * noise
-
-    def q_posterior(self, x_0, x_t, t):
-        s1 = self.posterior_mean_coef1[t]
-        s2 = self.posterior_mean_coef2[t]
-        s1 = s1.reshape(-1, 1)
-        s2 = s2.reshape(-1, 1)
-        mu = s1 * x_0 + s2 * x_t
-        return mu
-
-    def get_variance(self, t):
-        if t == 0:
-            return 0
-
-        variance = self.betas[t] * (1. - self.alphas_cumprod_prev[t]) / (1. - self.alphas_cumprod[t])
-        variance = variance.clip(1e-20)
-        return variance
-
-    def step(self, model_output, timestep, sample):
-        t = timestep
-        pred_original_sample = self.reconstruct_x0(sample, t, model_output)
-        pred_prev_sample = self.q_posterior(pred_original_sample, sample, t)
-
-        variance = 0
-        if t > 0:
-            noise = torch.randn_like(model_output)
-            variance = (self.get_variance(t) ** 0.5) * noise
-
-        pred_prev_sample = pred_prev_sample + variance
-
-        return pred_prev_sample
-
-    def add_noise(self, x_start, x_noise, timesteps):
-        s1 = self.sqrt_alphas_cumprod[timesteps]
-        s2 = self.sqrt_one_minus_alphas_cumprod[timesteps]
-
-        s1 = s1.reshape(-1, 1)
-        s2 = s2.reshape(-1, 1)
-
-        return s1 * x_start + s2 * x_noise
-
-    def __len__(self):
-        return self.num_timesteps
-
 
 class SimpleDiffusion():
     """
@@ -241,17 +163,20 @@ class SimpleDiffusion():
         self.num_timesteps = num_timesteps
         self.beta_schedule = beta_schedule
 
-        self.diff_model = MLP(
+        self.denoising_model = MLP(
                 hidden_size=hidden_size,
                 hidden_layers=num_layers,
                 emb_size=embedding_size,
                 time_emb=time_embedding,
                 input_emb=input_embedding).to(self.device)
 
-        self.noise_scheduler = NoiseScheduler(
-            num_timesteps=num_timesteps,
-            beta_schedule=beta_schedule)
-
+        self.diffusion = GaussianDiffusion(
+                self.denoising_model,
+                image_size = self.dim,
+                auto_normalize = False,
+                timesteps = 1000    # number of steps
+            ).to(self.device)
+        
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
@@ -262,63 +187,41 @@ class SimpleDiffusion():
         global_step = 0
         frames = []
         losses = []
-        optimizer = torch.optim.AdamW(self.diff_model.parameters())
+        optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         normalized_data, self.mins, self.maxs = self.normalize_dataset(data)
         dataloader = torch.utils.data.DataLoader(
             normalized_data, batch_size=128, shuffle=True)
 
         print("Training model...")
-        progress_bar = tqdm(total=num_epochs)
         for epoch in range(num_epochs):
-            self.diff_model.train()
-            progress_bar.set_description(f"Epoch {epoch}")
-            for x in dataloader:
+            self.diffusion.model.train()
+            if epoch % 20 == 0:
+                print("Epoch %d " % (epoch))
+            for i, x in enumerate(dataloader):
+                optimizer.zero_grad()
                 x = x.to(self.device)
                 batch = x.to(self.device)
-                noise = torch.randn(batch.shape).to(self.device)
-                timesteps = torch.randint(
-                    0, self.noise_scheduler.num_timesteps, (batch.shape[0],)
-                ).long().to(self.device)
-
-                noisy = self.noise_scheduler.add_noise(batch, noise, timesteps)
-                noise_pred = self.diff_model(noisy, timesteps)
-                loss = F.mse_loss(noise_pred, noise)
-                optimizer.zero_grad()
-
+                batch = batch.view(-1, 1 ,1 , 2)
+                loss = self.diffusion(batch)
                 if not torch.isnan(loss) and not torch.isinf(loss):
                     loss.backward()
-                    nn.utils.clip_grad_norm_(self.diff_model.parameters(), 1.0)
+                    nn.utils.clip_grad_norm_(self.diffusion.model.parameters(), 1.0)
                     optimizer.step()
                 else:
                     print("nan loss in non-replay step")
-
-                progress_bar.update(1)
                 logs = {"loss": loss.detach().item(), "step": global_step}
                 losses.append(loss.detach().item())
-                progress_bar.set_postfix(**logs)
                 global_step += 1
-            progress_bar.close()
 
             self.losses = torch.tensor(losses)
-            return self.losses
+        return self.losses
 
     def generate(self, nb_samples, save_path=None):
         if nb_samples == 0:
             return torch.tensor([])
-        self.diff_model.eval()
-        sample = torch.randn(nb_samples, 2).to(self.device)
-        timesteps = list(range(len(self.noise_scheduler)))[::-1]
-        frames = []
-        samples = []
-        steps = []
-        plot_step = 50
-        for i, t in enumerate(timesteps):
-            t = torch.from_numpy(np.repeat(t,
-                nb_samples)).long().to(self.device)
-            with torch.no_grad():
-                residual = self.diff_model(sample, t)
-            sample = self.noise_scheduler.step(residual, t[0], sample)
-        self.diff_model.train()
+        self.diffusion.model.eval()
+        sample = self.diffusion.sample(nb_samples)
+        self.diffusion.model.train()
         return self.unnormalize_dataset(sample.detach(), self.mins, self.maxs)
 
     def eval(self, data, **kwargs):
@@ -335,23 +238,13 @@ class SimpleDiffusion():
         raise NotImplementedError
 
     def load(self, path):
-        self.diff_model.load_state_dict(torch.load(path))
+        self.diffusion.load_state_dict(torch.load(path))
 
     def save_model(self, path):
-        torch.save(self.diff_model.state_dict(), path)
+        torch.save(self.diffusion.state_dict(), path)
 
     def reset(self):
-        base_dist = StandardNormal(shape=[self.dim])
-
-        transforms = []
-        for _ in range(self.num_layers):
-            transforms.append(ReversePermutation(features=self.dim))
-            transforms.append(MaskedAffineAutoregressiveTransform(features=self.dim,
-                                                                hidden_features=64))
-        transform = CompositeTransform(transforms)
-
-        self.flow = Flow(transform, base_dist)
-
+        raise NotImplementedError
 
     def normalize_dataset(self, dataset):
         # Normalize data range to [-1, 1] (Assumes min and max data values
