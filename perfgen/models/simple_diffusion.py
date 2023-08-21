@@ -244,7 +244,7 @@ class SimpleDiffusion():
     def save_model(self, path):
         torch.save(self.diffusion.state_dict(), path)
 
-    def reset(self):
+    def cold_start(self):
         raise NotImplementedError
 
     def normalize_dataset(self, dataset):

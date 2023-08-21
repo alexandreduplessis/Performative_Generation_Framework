@@ -1,0 +1,6 @@
+model: gmm
+n_epochs: 100
+n_retrain: 25
+n_samples: 5000
+prop_old: 0.
+exp_name: collapse

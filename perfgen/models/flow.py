@@ -90,7 +90,7 @@ class Normalizing_Flow():
     def save_model(self, path):
         torch.save(self.flow.state_dict(), path)
 
-    def reset(self):
+    def cold_start(self):
         base_dist = StandardNormal(shape=[self.dim])
 
         transforms = []

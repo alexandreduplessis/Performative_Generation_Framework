@@ -22,8 +22,8 @@ def main():
     n_samples = args.n_samples
 
     rng = check_random_state(0)
-    if not os.path.exists(args.path):
-        os.makedirs(args.path)
+    if not os.path.exists(args.dump_path):
+        os.makedirs(args.dump_path)
 
     info = {}
     info['date'] = date_str
@@ -34,11 +34,11 @@ def main():
     info['nb_new'] = args.nb_new
     info['checkpoint_freq'] = args.checkpoint_freq
     info['checkpoint_nb_gen'] = args.checkpoint_nb_gen
-    info['exp_name'] = args.path
+    info['dump_path'] = args.dump_path
     info['model'] = args.model
-    info['reset'] = args.reset
+    info['cold_start'] = args.cold_start
 
-    np.save(args.path + '/info.npy', info)
+    np.save(args.dump_path + '/info.npy', info)
 
     data = sample_2d_data(args.data, n_samples, rng)
     n_retrain = args.n_retrain
@@ -55,20 +55,20 @@ def main():
         raise NotImplementedError
 
     run = wandb.init(
-    project="Performative_Generation_Framework",
-    config={
-        "n_retrain": args.n_retrain,
-        "n_samples": args.n_samples,
-        "data": args.data,
-        "prop_old": args.prop_old,
-        "nb_new": args.nb_new,
-        "checkpoint_freq": args.checkpoint_freq,
-        "checkpoint_nb_gen": args.checkpoint_nb_gen,
-        "exp_path": args.path,
-        "model": args.model,
-        "reset": args.reset
-    },
-    name=args.exp_name
+        project="Performative_Generation_Framework",
+        config={
+            "n_retrain": args.n_retrain,
+            "n_samples": args.n_samples,
+            "data": args.data,
+            "prop_old": args.prop_old,
+            "nb_new": args.nb_new,
+            "checkpoint_freq": args.checkpoint_freq,
+            "checkpoint_nb_gen": args.checkpoint_nb_gen,
+            "dump_path": args.dump_path,
+            "model": args.model,
+            "cold_start": args.cold_start
+        },
+        name=args.exp_name
     )
 
 
@@ -78,10 +78,11 @@ def main():
     epochs_schedule = [args.n_epochs] * n_retrain
 
     performative_generator = Performative_Generator(
-        model=model, data=data, n_retrain=n_retrain, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, exp_name=args.path, reset=args.reset, device = args.device)
+        model=model, data=data, n_retrain=n_retrain, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, dump_path=args.dump_path, cold_start=args.cold_start, device = args.device, save_gen_samples=True)
     metrics = performative_generator.train()
 
-    np.save(args.path + '/metrics.npy', metrics)
+    np.save(args.dump_path + '/metrics.npy', metrics)
+    np.save(args.dump_path + '/metrics.npy', metrics)
 
 
 if __name__ == "__main__":
