@@ -111,7 +111,7 @@ class BNAFlow():
     def save_model(self, path):
         torch.save(self.flow.state_dict(), path)
 
-    def reset(self):
+    def cold_start(self):
         raise NotImplementedError
 
 def create_model(n_flows, hidden_dim, n_layers):

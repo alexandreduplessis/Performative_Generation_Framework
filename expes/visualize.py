@@ -62,9 +62,9 @@ run = wandb.init(
         "nb_new": args.nb_new,
         "checkpoint_freq": args.checkpoint_freq,
         "checkpoint_nb_gen": args.checkpoint_nb_gen,
-        "exp_path": args.path,
+        "exp_path": args.dump_path,
         "model": args.model,
-        "reset": args.reset
+        "cold_start": args.cold_start
     },
     name=args.exp_name + "_viz"
     )
@@ -75,7 +75,7 @@ assert len(indices) == n_plots
 fig, axs = plt.subplots(1, n_plots, figsize=(10, 10))
 
 for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
-    model.load(args.path + '/' + "model_" + str(idx_checkpoint))
+    model.load(args.dump_path + '/' + "model_" + str(idx_checkpoint))
     gen_samples = model.generate(1000)
     print(gen_samples.std())
     if args.model == 'simplediff':
@@ -84,6 +84,6 @@ for idx_arr, idx_checkpoint in enumerate(tqdm(indices)):
         plt_density(model, axs[idx_arr])
     axs[idx_arr].set_title(str(idx_checkpoint))
 
-# plt.savefig(args.path + "/fig.pdf")
+# plt.savefig(args.dump_path + "/fig.pdf")
 plt.show()
 wandb.log({"fig": fig})

@@ -32,7 +32,10 @@ class Performative_Generator():
     eval_datas : array
         Dataset on which to evaluate the model
     """
-    def __init__(self, model, data, n_retrain, prop_old_schedule, nb_new_schedule, epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen, exp_name, reset, device, eval_data=None):
+    def __init__(
+        self, model, data, n_retrain, prop_old_schedule, nb_new_schedule,
+        epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen,
+        dump_path, cold_start, device, eval_data=None, save_gen_samples=False):
         self.model = model
         self.data = data
         self.old_data = data.clone()
@@ -44,9 +47,10 @@ class Performative_Generator():
         self.eval_data = eval_data
         self.checkpoint_freq = checkpoint_freq
         self.checkpoint_nb_gen = checkpoint_nb_gen
-        self.exp_name = exp_name
-        self.reset = reset
+        self.dump_path = dump_path
+        self.cold_start = cold_start
         self.device = device
+        self.save_gen_samples = save_gen_samples
 
 
     def train(self):
@@ -54,8 +58,8 @@ class Performative_Generator():
         metrics['indices'] = self.eval_schedule
         theta = {}
         for i in tqdm(range(self.n_retrain)):
-            if self.reset:
-                self.model.reset()
+            if self.cold_start:
+                self.model.cold_start()
             # Generate data to train
             nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
             nb_new = self.nb_new_schedule[i]
@@ -69,10 +73,17 @@ class Performative_Generator():
             # Save model
             if i % self.checkpoint_freq == 0:
                 self.model.save_model(
-                    f"{self.exp_name}/model_{i}")
+                    f"{self.dump_path}/model_{i}")
                 # generate
                 gen_data = self.model.generate(
-                    self.checkpoint_nb_gen, f"{self.exp_name}/generated_{i}.pt")
+                    self.checkpoint_nb_gen,
+                    f"{self.dump_path}/generated_{i}.pt")
+                # import ipdb; ipdb.set_trace()
+                if (self.dump_path is not None) and self.save_gen_samples:
+                    # Save the generated samples
+                    torch.save(
+                        gen_data.detach().cpu(),
+                        f"{self.dump_path}/generated_samples_{i}.pt")
 
             if i in self.eval_schedule:
                 # Evaluate on old_data
@@ -104,7 +115,7 @@ class Performative_Generator():
                             metrics["eval"+str(keys)] = np.concatenate([metrics["eval"+keys], np.array([new_metrics[keys]])])
                             wandb.log({"eval"+str(keys): new_metrics[keys]})
         # One last save
-        self.model.save_model(f"{self.exp_name}/model_final")
-        gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.exp_name}/generated_final.pt")
+        self.model.save_model(f"{self.dump_path}/model_final")
+        gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.dump_path}/generated_final.pt")
 
         return metrics

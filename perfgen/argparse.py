@@ -1,56 +1,18 @@
-import argparse, configparser
+import argparse
 import time
 import torch
-import json
+from omegaconf import OmegaConf
 
 
 def my_parser():
-    parser = argparse.ArgumentParser(description='Performative Generator')
-    parser.add_argument('--model', type=str, default='bnaf', help='Model to train and generate data')
-    parser.add_argument('--n_retrain', type=int, default=1, help='Number of iterations') # Warning: few retraining can be misleading when reading the results
-    parser.add_argument('--n_samples', type=int, default=1000, help='Number of samples')
-    parser.add_argument('--data', type=str, default='8gaussians', help='Dataset to use')
-    parser.add_argument('--prop_old', type=float, default=0., help='Proportion of old data')
-    parser.add_argument('--nb_new', type=int, default=-1, help='Number of new datapoints to generate')
-    parser.add_argument('--checkpoint_freq', type=int, default=1, help='Frequency of checkpoints')
-    parser.add_argument('--checkpoint_nb_gen', type=int, default=1000, help='Number of samples to generate at each checkpoint')
-    parser.add_argument('--path', type=str, default="", help='Name of the experiment')
-    parser.add_argument('--reset', type=bool, default=False, help='Reset the model at each iteration')
-    parser.add_argument('--n_epochs', type=int, default=-1, help='Number of epochs')
-    parser.add_argument('--device', type=str, default='None', help='Device to use')
-    parser.add_argument('--last_run', type=bool, default=False, help="Use the last experiment's arguments")
-    parser.add_argument('--exp_name', type=str, default="", help='Name of the experiment')
-    parser.add_argument("-c", "--config_file", type=str, default = "./expes/configs.conf", help='Config file')
-
+    yaml_config = OmegaConf.load('base.yaml')
+    parser = generate_parser_from_dict(yaml_config)
     args = parser.parse_args()
-
-    # if args.config_file:
-    #     config = configparser.ConfigParser()
-    #     config.read(args.config_file)
-    #     defaults = {}
-    #     defaults.update(dict(config.items("Defaults")))
-    #     parser.set_defaults(**defaults)
-    #     args = parser.parse_args()
-
-    if args.last_run:
-        try:
-            with open('./runs/last_run.json', 'r') as f:
-                args_dict = json.load(f)
-            args = argparse.Namespace(**args_dict)
-        except:
-            print("No last run found")
-            exit(1)
-    else:
-        # save the arguments in a json file in ./runs/last_run.json
-        args_dict = vars(args)
-        with open('./runs/last_run.json', 'w') as f:
-            json.dump(args_dict, f, indent=4)
 
     if args.exp_name == "":
         args.exp_name = time.strftime("%Y%m%d-%H%M%S")
 
-    if args.device == 'None':
-        args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if args.nb_new == -1:
         args.nb_new = args.n_samples
@@ -66,10 +28,13 @@ def my_parser():
         elif args.model == 'simplediff':
             args.n_epochs = 200
 
-
-    if args.path == "":
-        args.path = './checkpoints/' + args.model + '/' + args.data + '/' + str(args.n_retrain) + '/' + str(args.n_samples) + '/' + str(args.reset) + '/' + str(args.prop_old)
-    else:
-        args.path = args.path
+    args.dump_path = './checkpoints/' + args.model + '/' + args.data + '/' + 'n_retrain_' + str(args.n_retrain) + '/' + 'n_samples_' + str(args.n_samples) + '/' + 'cold_start_' + str(args.cold_start) + '/' + 'prop_old_' + str(args.prop_old)
 
     return args
+
+def generate_parser_from_dict(config_dict):
+    parser = argparse.ArgumentParser(description="Generated from dictionary")
+    for arg, attributes in config_dict.items():
+        parser.add_argument(
+            f"--{arg}", type=type(attributes), default=attributes)
+    return parser

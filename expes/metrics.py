@@ -9,8 +9,8 @@ from tqdm import tqdm
 
 args = my_parser()
 
-# open args.path + '/metrics.npy'
-metrics = np.load(args.path + '/metrics.npy', allow_pickle=True).item()
+# open args.dump_path + '/metrics.npy'
+metrics = np.load(args.dump_path + '/metrics.npy', allow_pickle=True).item()
 
 indices = metrics['indices']
 oldstd = metrics['oldstd']

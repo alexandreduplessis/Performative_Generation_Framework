@@ -75,9 +75,6 @@ class Gaussian_Mixture_Model():
             new_sample = self.rng.multivariate_normal(self.mus[i], self.sigmas[i])
             samples.append(new_sample)
         samples = np.array(samples)
-        if save_path is not None:
-            # torch save
-            torch.save(torch.from_numpy(samples), save_path)
         return samples
 
     def eval(self, data, **kwargs):
@@ -113,5 +110,5 @@ class Gaussian_Mixture_Model():
         model_parameters = self.get_theta()
         torch.save(model_parameters, path)
 
-    def reset(self):
+    def cold_start(self):
         return None
