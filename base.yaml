@@ -1,6 +1,13 @@
-model: gmm
+model: simplediff
 n_epochs: 100
 n_retrain: 25
 n_samples: 5000
 prop_old: 0.
 exp_name: collapse
+checkpoint_freq: 1
+checkpoint_nb_gen: 1000
+cold_start: False
+device: cpu
+last_run: False
+data: 8gaussians
+nb_new: -1
