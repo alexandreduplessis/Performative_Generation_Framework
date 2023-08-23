@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --time=30:00:00
-#SBATCH --partition=long
+#SBATCH --partition=main
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=4G
 
@@ -16,4 +16,4 @@ conda activate torchopt
 
 # python expes/main.py --model simplediff --n_epochs 100 --n_retrain 25 --n_samples 1000 --prop_old=0. --exp_name sanity_check
 
-python expes/main.py --model simplediff --n_epochs 100 --n_retrain 25 --n_samples 1000 --prop_old=0.5 --exp_name sanity_check_stable
+python expes/main.py

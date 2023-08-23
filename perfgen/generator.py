@@ -1,6 +1,6 @@
 import numpy as np
 from perfgen.utils import mix_data
-from perfgen.plot_density import plt_density, plot_samples
+from perfgen.plot_density import plt_density, plot_kde_density
 from tqdm import tqdm
 import torch
 import wandb
@@ -56,7 +56,6 @@ class Performative_Generator():
     def train(self):
         metrics = {}
         metrics['indices'] = self.eval_schedule
-        theta = {}
         for i in tqdm(range(self.n_retrain)):
             if self.cold_start:
                 self.model.cold_start()
@@ -98,7 +97,7 @@ class Performative_Generator():
                         wandb.log({"old"+str(keys): new_metrics[keys]})
 
                 if ('Diff' in str(self.model)):
-                    plot_samples(
+                    plot_kde_density(
                         self.old_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
                 else:
                     plt_density(self.model, plt_name=f"density_{i}.png")

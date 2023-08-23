@@ -4,9 +4,11 @@ import torch
 from omegaconf import OmegaConf
 
 
-def my_parser():
-    yaml_config = OmegaConf.load('base.yaml')
+def my_parser(path_to_yaml='configs/2D_toy.yaml'):
+    yaml_config = OmegaConf.load(path_to_yaml)
     parser = generate_parser_from_dict(yaml_config)
+    parser.add_argument(
+        '--path_to_yaml', type=str, default='configs/base.yaml')
     args = parser.parse_args()
 
     if args.exp_name == "":
@@ -28,7 +30,7 @@ def my_parser():
         elif args.model == 'simplediff':
             args.n_epochs = 200
 
-    args.dump_path = './checkpoints/' + args.model + '/' + args.data + '/' + 'n_retrain_' + str(args.n_retrain) + '/' + 'n_samples_' + str(args.n_samples) + '/' + 'cold_start_' + str(args.cold_start) + '/' + 'prop_old_' + str(args.prop_old)
+    args.dump_path = get_dump_path(args)
 
     return args
 
@@ -38,3 +40,18 @@ def generate_parser_from_dict(config_dict):
         parser.add_argument(
             f"--{arg}", type=type(attributes), default=attributes)
     return parser
+
+def get_dump_path(args, cluster=True):
+    dump_path = 'checkpoints/' + args.model + '/' + args.data + '/' + 'n_retrain_' + str(args.n_retrain) + '/' + 'n_samples_' + str(args.n_samples) + '/' + 'cold_start_' + str(args.cold_start) + '/' + 'prop_old_' + str(args.prop_old)
+    if cluster:
+        dump_path = './' + dump_path
+    return dump_path
+
+def get_dump_path_from_yaml_path(path_to_yaml, cluster=True):
+    yaml_config = OmegaConf.load(path_to_yaml)
+    parser = generate_parser_from_dict(yaml_config)
+    parser.add_argument(
+        '--path_to_yaml', type=str, default='configs/base.yaml')
+    args = parser.parse_args()
+    dump_path = get_dump_path(args, cluster=False)
+    return dump_path

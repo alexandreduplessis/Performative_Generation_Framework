@@ -187,11 +187,11 @@ class SimpleDiffusion():
         global_step = 0
         frames = []
         losses = []
-        optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         normalized_data, self.mins, self.maxs = self.normalize_dataset(data)
         dataloader = torch.utils.data.DataLoader(
-            normalized_data, batch_size=128, shuffle=True)
+            normalized_data, batch_size=1024, shuffle=True)
 
+        optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         print("Training model...")
         for epoch in range(num_epochs):
             self.diffusion.model.train()
@@ -245,7 +245,20 @@ class SimpleDiffusion():
         torch.save(self.diffusion.state_dict(), path)
 
     def cold_start(self):
-        raise NotImplementedError
+        self.denoising_model = MLP(
+            hidden_size=self.hidden_size,
+            hidden_layers=self.num_layers,
+            emb_size=self.embedding_size,
+            time_emb=self.time_embedding,
+            input_emb=self.input_embedding).to(self.device)
+
+        self.diffusion = GaussianDiffusion(
+                self.denoising_model,
+                image_size = self.dim,
+                auto_normalize = False,
+                timesteps = 1000    # number of steps
+            ).to(self.device)
+        self.optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
 
     def normalize_dataset(self, dataset):
         # Normalize data range to [-1, 1] (Assumes min and max data values

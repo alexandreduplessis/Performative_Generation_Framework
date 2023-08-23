@@ -14,10 +14,12 @@ from perfgen.generator import Performative_Generator
 from perfgen.models.bnaf import BNAFlow
 from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.argparse import my_parser
+import sys
 
 def main():
     wandb.login()
     date_str = time.strftime("%Y%m%d-%H%M%S")
+
     args = my_parser()
     n_samples = args.n_samples
 
