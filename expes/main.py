@@ -10,9 +10,9 @@ from sklearn.utils import check_random_state
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
 from perfgen.models.simple_diffusion import SimpleDiffusion
+from perfgen.models.ddpm import DDPM
 from perfgen.generator import Performative_Generator
 from perfgen.models.bnaf import BNAFlow
-from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.argparse import my_parser
 import sys
 
@@ -31,7 +31,7 @@ def main():
     info['date'] = date_str
     info['n_retrain'] = args.n_retrain
     info['n_samples'] = args.n_samples
-    info['data'] = args.data
+    info['data'] = args.dataname
     info['prop_old'] = args.prop_old
     info['nb_new'] = args.nb_new
     info['checkpoint_freq'] = args.checkpoint_freq
@@ -42,7 +42,6 @@ def main():
 
     np.save(args.dump_path + '/info.npy', info)
 
-    data = sample_2d_data(args.data, n_samples, rng)
     n_retrain = args.n_retrain
     if args.model == 'gmm':
         model = Gaussian_Mixture_Model(
@@ -53,6 +52,8 @@ def main():
         model = BNAFlow(args.device)
     elif args.model == 'simplediff':
         model = SimpleDiffusion(args.device)
+    elif args.model == 'ddpm':
+        model = DDPM(args.device, args.dim)
     else:
         raise NotImplementedError
 
@@ -61,7 +62,7 @@ def main():
         config={
             "n_retrain": args.n_retrain,
             "n_samples": args.n_samples,
-            "data": args.data,
+            "data": args.dataname,
             "prop_old": args.prop_old,
             "nb_new": args.nb_new,
             "checkpoint_freq": args.checkpoint_freq,
@@ -74,13 +75,15 @@ def main():
     )
 
 
-    prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
-    nb_new_schedule = [0] + [args.nb_new] * n_retrain
-    eval_schedule = np.arange(0, n_retrain, 1)
-    epochs_schedule = [args.n_epochs] * n_retrain
+    args.prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
+    args.nb_new_schedule = [0] + [args.nb_new] * n_retrain
+    args.eval_schedule = np.arange(0, n_retrain, 1)
+    args.epochs_schedule = [args.n_epochs] * n_retrain
+    args.eval_data = None
+
 
     performative_generator = Performative_Generator(
-        model=model, data=data, n_retrain=n_retrain, prop_old_schedule=prop_old_schedule, nb_new_schedule=nb_new_schedule, epochs_schedule=epochs_schedule, eval_schedule=eval_schedule, checkpoint_freq=args.checkpoint_freq, checkpoint_nb_gen=args.checkpoint_nb_gen, dump_path=args.dump_path, cold_start=args.cold_start, device = args.device, save_gen_samples=True)
+        args, model=model, n_retrain=n_retrain, save_gen_samples=True)
     metrics = performative_generator.train()
 
     np.save(args.dump_path + '/metrics.npy', metrics)

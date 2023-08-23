@@ -16,4 +16,5 @@ conda activate torchopt
 
 # python expes/main.py --model simplediff --n_epochs 100 --n_retrain 25 --n_samples 1000 --prop_old=0. --exp_name sanity_check
 
-python expes/main.py
+# python expes/main.py --path_to_yaml configs/2D_toy_stable.yaml
+python expes/main.py --path_to_yaml configs/2D_toy_collapse.yaml

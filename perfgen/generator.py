@@ -1,9 +1,14 @@
 import numpy as np
-from perfgen.utils import mix_data
-from perfgen.plot_density import plt_density, plot_kde_density
 from tqdm import tqdm
 import torch
 import wandb
+
+
+from perfgen.utils import mix_data
+from perfgen.plot_density import plt_density, plot_kde_density
+from perfgen.datasets.toy_data import sample_2d_data
+from perfgen.datasets.cifar import cifar_mix_dataloader, cifar_dataloader
+
 
 class Performative_Generator():
     """
@@ -33,42 +38,63 @@ class Performative_Generator():
         Dataset on which to evaluate the model
     """
     def __init__(
-        self, model, data, n_retrain, prop_old_schedule, nb_new_schedule,
-        epochs_schedule, eval_schedule, checkpoint_freq, checkpoint_nb_gen,
-        dump_path, cold_start, device, eval_data=None, save_gen_samples=False):
+        self, args, model, n_retrain, save_gen_samples=False):
+        self.args = args
         self.model = model
-        self.data = data
-        self.old_data = data.clone()
+        self.dataname = args.dataname
+        if self.dataname != "cifar":
+            data = sample_2d_data(self.dataname, args.n_samples)
+            # TODO add rng back
+            self.data = data
+            self.init_data = data.clone()
+        else:
+            # import ipdb; ipdb.set_trace()
+            self.init_train_loader, self.test_loader = cifar_dataloader(args)
+
+
         self.n_retrain = n_retrain
-        self.prop_old_schedule = prop_old_schedule
-        self.nb_new_schedule = nb_new_schedule
-        self.epochs_schedule = epochs_schedule
-        self.eval_schedule = eval_schedule
-        self.eval_data = eval_data
-        self.checkpoint_freq = checkpoint_freq
-        self.checkpoint_nb_gen = checkpoint_nb_gen
-        self.dump_path = dump_path
-        self.cold_start = cold_start
-        self.device = device
+        self.prop_old_schedule = args.prop_old_schedule
+        self.nb_new_schedule = args.nb_new_schedule
+        self.epochs_schedule = args.epochs_schedule
+        self.eval_schedule = args.eval_schedule
+        self.eval_data = args.eval_data
+        self.checkpoint_freq = args.checkpoint_freq
+        self.checkpoint_nb_gen = args.checkpoint_nb_gen
+        self.dump_path = args.dump_path
+        self.cold_start = args.cold_start
+        self.device = args.device
         self.save_gen_samples = save_gen_samples
 
 
     def train(self):
         metrics = {}
         metrics['indices'] = self.eval_schedule
+        # TODO do iteration outside the loop
         for i in tqdm(range(self.n_retrain)):
             if self.cold_start:
                 self.model.cold_start()
-            # Generate data to train
-            nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
-            nb_new = self.nb_new_schedule[i]
-            data_to_train = mix_data(
-                self.old_data[:nb_old],
-                self.model.generate(nb_new).reshape((nb_new, self.old_data.shape[1])).cpu())
-            self.data = data_to_train.clone()
+            if self.dataname != "cifar":
+                # Generate data to train
+                # TODO encapsulate this in function
+                nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
+                nb_new = self.nb_new_schedule[i]
+                train_loader = mix_data(
+                    self.init_data[:nb_old],
+                    self.model.generate(nb_new).reshape((nb_new, self.init_data.shape[1])).cpu())
+                self.data = train_loader.clone()
+            else:
+                # Everything should be done on cpu here
+                # import ipdb; ipdb.set_trace()
+                if i == 0:
+                    train_loader = self.init_train_loader
+                else:
+                    train_loader = cifar_mix_dataloader(
+                        self.args,
+                        self.init_train_loader,
+                        self.model.generate(nb_new)).cpu()
 
             # Train model
-            losses = self.model.train(data_to_train, self.epochs_schedule[i])
+            losses = self.model.train(train_loader, self.epochs_schedule[i])
             # Save model
             if i % self.checkpoint_freq == 0:
                 self.model.save_model(
@@ -86,7 +112,7 @@ class Performative_Generator():
 
             if i in self.eval_schedule:
                 # Evaluate on old_data
-                new_metrics = self.model.eval(self.old_data)
+                new_metrics = self.model.eval(self.init_data)
                 if i == self.eval_schedule[0]:
                     for keys in new_metrics.keys():
                         metrics["old"+str(keys)] = np.array([new_metrics[keys]])
@@ -98,13 +124,13 @@ class Performative_Generator():
 
                 if ('Diff' in str(self.model)):
                     plot_kde_density(
-                        self.old_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
+                        self.init_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
                 else:
                     plt_density(self.model, plt_name=f"density_{i}.png")
 
                 if self.eval_data is not None:
                     # Evaluate on eval_data
-                    new_metrics = self.model.eval(self.old_data)
+                    new_metrics = self.model.eval(self.init_data)
                     if i == self.eval_schedule[0]:
                         for keys in new_metrics.keys():
                             metrics["eval"+str(keys)] = np.array([new_metrics[keys]])

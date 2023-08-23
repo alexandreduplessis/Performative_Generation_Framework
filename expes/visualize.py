@@ -57,7 +57,7 @@ run = wandb.init(
     config={
         "n_retrain": args.n_retrain,
         "n_samples": args.n_samples,
-        "data": args.data,
+        "data": args.dataname,
         "prop_old": args.prop_old,
         "nb_new": args.nb_new,
         "checkpoint_freq": args.checkpoint_freq,

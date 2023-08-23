@@ -1,6 +1,7 @@
 model: simplediff
 n_epochs: 200
-n_retrain: 100
+# n_retrain: 100
+n_retrain: 510
 n_samples: 10000
 prop_old: 0.5
 exp_name: stable
@@ -9,5 +10,5 @@ checkpoint_nb_gen: 5000
 cold_start: False
 device: cpu
 last_run: False
-data: 8gaussians
+dataname: 8gaussians
 nb_new: -1

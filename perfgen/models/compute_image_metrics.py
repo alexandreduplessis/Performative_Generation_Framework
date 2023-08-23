@@ -12,7 +12,7 @@ import ipdb
 @torch.inference_mode()
 def fls_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322,
               train_dataset_name="CIFAR10_train", test_dataset_name="CIFAR10_test"):
-    
+
     # Save path determines where features are cached (useful for train/test sets)
     feature_extractor = DINOv2FeatureExtractor(save_path="data/features")
 
@@ -32,7 +32,7 @@ def fls_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322
 @torch.inference_mode()
 def kid_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322,
               train_dataset_name="CIFAR10_train", test_dataset_name="CIFAR10_test"):
-    
+
     # Save path determines where features are cached (useful for train/test sets)
     feature_extractor = InceptionFeatureExtractor(save_path="data/features")
 
@@ -51,7 +51,7 @@ def kid_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322
 @torch.inference_mode()
 def fid_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322,
               train_dataset_name="CIFAR10_train", test_dataset_name="CIFAR10_test"):
-    
+
     # Save path determines where features are cached (useful for train/test sets)
     feature_extractor = InceptionFeatureExtractor(save_path="data/features")
 
@@ -68,10 +68,10 @@ def fid_score(train_dataset, test_dataset, generate_imgs, dataset_constant=1.322
     return fid
 
 @torch.inference_mode()
-def precision_recall_score(train_dataset, test_dataset, generate_imgs, 
+def precision_recall_score(train_dataset, test_dataset, generate_imgs,
                            mode='Precision', dataset_constant=1.322,
                            train_dataset_name="CIFAR10_train", test_dataset_name=None):
-    
+
     # Save path determines where features are cached (useful for train/test sets)
     feature_extractor = InceptionFeatureExtractor(save_path="data/features")
 

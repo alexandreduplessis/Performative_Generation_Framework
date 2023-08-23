@@ -805,3 +805,110 @@ class GaussianDiffusion(nn.Module):
 
         img = self.normalize(img)
         return self.p_losses(img, t, *args, **kwargs)
+
+
+class DDPM():
+    """
+    Simple DDPM style Diffusion
+    """
+    def __init__(
+            self, device='cpu', num_layers = 5, dim=32, hidden_size=128,
+            embedding_size=128, time_embedding='sinusoidal',
+            input_embedding='sinusoidal', num_timesteps=250, beta_schedule='linear'):
+
+        self.num_layers = num_layers
+        self.dim = dim
+        self.device = device
+        self.hidden_size = hidden_size
+        self.hidden_layers = num_layers
+        self.num_timesteps = num_timesteps
+        self.beta_schedule = beta_schedule
+
+        self.denoising_model = Unet(
+            dim = 64,
+            dim_mults = (1, 2, 4, 8),
+            flash_attn = False).to(self.device)
+            # flash_attn = True).to(self.device)
+
+        self.diffusion = GaussianDiffusion(
+            self.denoising_model,
+            image_size = self.dim,
+            timesteps = num_timesteps).to(self.device)
+
+        self.losses = []
+        self.name = f'{self.num_layers}-layers Normalizing Flow'
+        self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
+                                    'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
+        self.max_gradient_norm = 1
+
+    def train(self, train_loader, num_epochs=200):
+        global_step = 0
+        frames = []
+        losses = []
+
+        optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
+        print("Training model...")
+        for epoch in range(num_epochs):
+            self.diffusion.model.train()
+            if epoch % 1 == 0:
+                print("Epoch %d " % (epoch))
+            for i, (x, _) in enumerate(train_loader):
+                optimizer.zero_grad()
+                # x = x[0]
+                # x = x.to(self.device)
+                batch = x.to(self.device)
+                # batch = batch.view(-1, 1 ,1 , 2)
+                loss = self.diffusion(batch)
+                if not torch.isnan(loss) and not torch.isinf(loss):
+                    loss.backward()
+                    nn.utils.clip_grad_norm_(self.diffusion.model.parameters(), 1.0)
+                    optimizer.step()
+                else:
+                    print("nan loss in non-replay step")
+                logs = {"loss": loss.detach().item(), "step": global_step}
+                losses.append(loss.detach().item())
+                global_step += 1
+
+            self.losses = torch.tensor(losses)
+        return self.losses
+
+    def generate(self, n_samples, save_path=None):
+        if n_samples == 0:
+            return torch.tensor([])
+        self.diffusion.model.eval()
+        sample = self.diffusion.sample(n_samples)
+        self.diffusion.model.train()
+        return sample.detach()
+
+    def eval(self, data, **kwargs):
+        with torch.no_grad():
+            metrics = {}
+            # compute the std and mean of the data, taking weights into account
+            data_gen = self.generate(len(data))
+            model_std = torch.std(data_gen, dim=0).cpu()
+            metrics['std'] = torch.norm(model_std)
+            return metrics
+
+    def log_prob(self, data):
+        print("Probability FLOW ODE not implemented. Can only generate samples")
+        raise NotImplementedError
+
+    def load(self, path):
+        self.diffusion.load_state_dict(torch.load(path))
+
+    def save_model(self, path):
+        torch.save(self.diffusion.state_dict(), path)
+
+    def cold_start(self):
+        self.denoising_model = Unet(
+            dim = 64,
+            dim_mults = (1, 2, 4, 8),
+            flash_attn = False).to(self.device)
+            # flash_attn = True).to(self.device)
+
+        self.diffusion = GaussianDiffusion(
+            self.denoising_model,
+            image_size = self.dim,
+            timesteps = self.num_timesteps    # number of steps
+        )
+        self.optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
