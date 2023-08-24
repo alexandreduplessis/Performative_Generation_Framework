@@ -1,0 +1,15 @@
+model: simplediff
+n_epochs: 200
+n_retrain: 110
+n_samples: 10000
+prop_old: 0.5
+exp_name: investigate_optimizer_stable
+checkpoint_freq: 10
+checkpoint_nb_gen: 1000
+cold_start: False
+device: cpu
+last_run: False
+dataname: 8gaussians
+nb_new: -1
+batch_size: 1024
+save_gen_samples: False
