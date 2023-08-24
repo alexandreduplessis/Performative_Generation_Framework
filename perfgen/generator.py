@@ -22,20 +22,22 @@ class Performative_Generator():
             - a train method of the form model.train(data, epochs, **kwargs)
             - a generate method of the form model.generate(n_samples, **kwargs)
             - an eval method of the form model.eval(data, **kwargs) that returns a dictionary of metrics
-    data : array
-        Old data
     n_retrain : int
         Number of iterations
-    prop_old_schedule : array
-        Proportion of old data at each iteration
-    nb_new_schedule : array
-        Number of new datapoints to generate at each iteration
-    epochs_schedule : array
-        Number of epochs to train the model at each iteration
-    eval_schedule : array
-        Iterations at which to evaluate the model
-    eval_datas : array
-        Dataset on which to evaluate the model
+    save_gen_samples : bool, default=False
+    args : parser with the following arguments
+        data : array
+            Old data
+        prop_old_schedule : array
+            Proportion of old data at each iteration
+        nb_new_schedule : array
+            Number of new datapoints to generate at each iteration
+        epochs_schedule : array
+            Number of epochs to train the model at each iteration
+        eval_schedule : array
+            Iterations at which to evaluate the model
+        eval_datas : array
+            Dataset on which to evaluate the model
     """
     def __init__(
         self, args, model, n_retrain, save_gen_samples=False):
@@ -44,7 +46,7 @@ class Performative_Generator():
         self.dataname = args.dataname
         if self.dataname != "cifar":
             data = sample_2d_data(self.dataname, args.n_samples)
-            # TODO add rng back
+            # TODO add rng back in sample_2d_data
             self.data = data
             self.init_data = data.clone()
         else:

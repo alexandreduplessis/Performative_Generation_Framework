@@ -75,6 +75,7 @@ def main():
     )
 
 
+    # This is dirty: we should change it
     args.prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
     args.nb_new_schedule = [0] + [args.nb_new] * n_retrain
     args.eval_schedule = np.arange(0, n_retrain, 1)
