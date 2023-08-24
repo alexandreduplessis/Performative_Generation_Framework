@@ -22,7 +22,8 @@ true_samples = sample_2d_data('8gaussians', 5_000, rng)
 
 
 configure_plt()
-n_retrains = [0, 10, 20, 50]
+n_retrains = [0, 10, 50, 500]
+# n_retrains = [0, 10, 20, 50]
 n_subplots = len(n_retrains)
 
 fontsize= 18
@@ -56,8 +57,8 @@ axs[1, 0].set_ylabel('Partial \n Replacement', fontsize=fontsize)
 
 fig_dir = "../perfgen_tex/figures/"
 fig_dir_svg = "../perfgen_tex/figures_svg/"
-# save_fig = False
-save_fig = True
+save_fig = False
+# save_fig = True
 plt.tight_layout()
 if save_fig:
     fig_name = "2D_toy"
