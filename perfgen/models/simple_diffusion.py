@@ -176,7 +176,7 @@ class SimpleDiffusion():
                 auto_normalize = False,
                 timesteps = 1000    # number of steps
             ).to(self.device)
-
+        self.optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
         self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
@@ -191,14 +191,13 @@ class SimpleDiffusion():
         dataloader = torch.utils.data.DataLoader(
             normalized_data, batch_size=1024, shuffle=True)
 
-        optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         print("Training model...")
         for epoch in range(num_epochs):
             self.diffusion.model.train()
             if epoch % 20 == 0:
                 print("Epoch %d " % (epoch))
             for i, x in enumerate(dataloader):
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 x = x.to(self.device)
                 batch = x.to(self.device)
                 batch = batch.view(-1, 1 ,1 , 2)
@@ -206,7 +205,7 @@ class SimpleDiffusion():
                 if not torch.isnan(loss) and not torch.isinf(loss):
                     loss.backward()
                     nn.utils.clip_grad_norm_(self.diffusion.model.parameters(), 1.0)
-                    optimizer.step()
+                    self.optimizer.step()
                 else:
                     print("nan loss in non-replay step")
                 logs = {"loss": loss.detach().item(), "step": global_step}
@@ -258,6 +257,7 @@ class SimpleDiffusion():
                 auto_normalize = False,
                 timesteps = 1000    # number of steps
             ).to(self.device)
+        # TODO is it really a cold start?
         self.optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
 
     def normalize_dataset(self, dataset):
