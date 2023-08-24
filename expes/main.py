@@ -84,7 +84,7 @@ def main():
 
 
     performative_generator = Performative_Generator(
-        args, model=model, n_retrain=n_retrain, save_gen_samples=True)
+        args, model=model, n_retrain=n_retrain)
     metrics = performative_generator.train()
 
     np.save(args.dump_path + '/metrics.npy', metrics)

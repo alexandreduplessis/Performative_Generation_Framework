@@ -16,3 +16,4 @@ val_batchsize: 128
 dataroot: "/network/datasets/cifar10.var/cifar10_torchvision/"
 nworkers: 1
 dim: 32
+save_gen_samples: False

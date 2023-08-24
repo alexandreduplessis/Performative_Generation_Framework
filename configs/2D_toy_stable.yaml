@@ -12,3 +12,4 @@ device: cpu
 last_run: False
 dataname: 8gaussians
 nb_new: -1
+save_gen_samples: True

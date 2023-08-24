@@ -12,3 +12,4 @@ last_run: False
 dataname: 8gaussians
 nb_new: -1
 batch_size: 128
+save_gen_samples: True

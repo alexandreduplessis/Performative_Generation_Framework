@@ -40,7 +40,7 @@ class Performative_Generator():
             Dataset on which to evaluate the model
     """
     def __init__(
-        self, args, model, n_retrain, save_gen_samples=False):
+        self, args, model, n_retrain):
         self.args = args
         self.model = model
         self.dataname = args.dataname
@@ -65,7 +65,7 @@ class Performative_Generator():
         self.dump_path = args.dump_path
         self.cold_start = args.cold_start
         self.device = args.device
-        self.save_gen_samples = save_gen_samples
+        self.save_gen_samples = args.save_gen_samples
 
 
     def train(self):
