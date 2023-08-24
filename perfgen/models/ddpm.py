@@ -26,9 +26,10 @@ from ema_pytorch import EMA
 from accelerate import Accelerator
 import ipdb
 from perfgen.models.attend import Attend
-# from perfgen.models.fid_evaluation import FIDEvaluation
+from perfgen.models.compute_image_metrics import (
+    fls_score, kid_fid_precision_recall_score)
+from torchvision.utils import save_image
 
-# constants
 
 ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 
@@ -814,7 +815,8 @@ class DDPM():
     def __init__(
             self, device='cpu', num_layers = 5, dim=32, hidden_size=128,
             embedding_size=128, time_embedding='sinusoidal',
-            input_embedding='sinusoidal', num_timesteps=250, beta_schedule='linear'):
+            input_embedding='sinusoidal', num_timesteps=5, beta_schedule='linear'):
+            # input_embedding='sinusoidal', num_timesteps=250, beta_schedule='linear'):
 
         self.num_layers = num_layers
         self.dim = dim
@@ -852,10 +854,12 @@ class DDPM():
             self.diffusion.model.train()
             if epoch % 1 == 0:
                 print("Epoch %d " % (epoch))
-            for i, (x, _) in enumerate(train_loader):
+            for i, x in enumerate(train_loader):
+                # if len(x) == 2:
+                x = x[0]
+                # else:
+                #     import ipdb; ipdb.set_trace()
                 optimizer.zero_grad()
-                # x = x[0]
-                # x = x.to(self.device)
                 batch = x.to(self.device)
                 # batch = batch.view(-1, 1 ,1 , 2)
                 loss = self.diffusion(batch)
@@ -880,14 +884,17 @@ class DDPM():
         self.diffusion.model.train()
         return sample.detach()
 
-    def eval(self, data, **kwargs):
+    def eval(self, train_loader, test_loader, gen_data):
         with torch.no_grad():
             metrics = {}
-            # compute the std and mean of the data, taking weights into account
-            data_gen = self.generate(len(data))
-            model_std = torch.std(data_gen, dim=0).cpu()
-            metrics['std'] = torch.norm(model_std)
-            return metrics
+            train_data = train_loader.dataset
+            test_data = test_loader.dataset
+            metrics['FLS']  = fls_score(train_data, test_data, gen_data)
+            metrics['KID'], metrics['FID'], metrics['Precision'], metrics['Recall']  = kid_fid_precision_recall_score(
+                train_data, test_data, torch.utils.data.TensorDataset(gen_data))
+
+
+
 
     def log_prob(self, data):
         print("Probability FLOW ODE not implemented. Can only generate samples")
