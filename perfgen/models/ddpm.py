@@ -815,7 +815,9 @@ class DDPM():
     def __init__(
             self, device='cpu', num_layers = 5, dim=32, hidden_size=128,
             embedding_size=128, time_embedding='sinusoidal',
-            input_embedding='sinusoidal', num_timesteps=5, beta_schedule='linear'):
+            input_embedding='sinusoidal', num_timesteps=5,
+            sampling_timesteps=4,
+            beta_schedule='linear'):
             # input_embedding='sinusoidal', num_timesteps=250, beta_schedule='linear'):
 
         self.num_layers = num_layers
@@ -824,6 +826,7 @@ class DDPM():
         self.hidden_size = hidden_size
         self.hidden_layers = num_layers
         self.num_timesteps = num_timesteps
+        self.sampling_timesteps = sampling_timesteps
         self.beta_schedule = beta_schedule
 
         self.denoising_model = Unet(
@@ -835,7 +838,8 @@ class DDPM():
         self.diffusion = GaussianDiffusion(
             self.denoising_model,
             image_size = self.dim,
-            timesteps = num_timesteps).to(self.device)
+            timesteps = self.num_timesteps,
+            sampling_timesteps=self.sampling_timesteps).to(self.device)
 
         self.losses = []
         self.name = f'{self.num_layers}-layers Normalizing Flow'
@@ -872,14 +876,24 @@ class DDPM():
             self.losses = torch.tensor(losses)
         return self.losses
 
-    def generate(self, n_samples, save_path=None):
+    @torch.inference_mode()
+    def generate(self, n_samples, batchsize_sampling=4096, save_path=None):
         if n_samples == 0:
             return torch.tensor([])
         self.diffusion.model.eval()
-        sample = self.diffusion.sample(n_samples)
-        self.diffusion.model.train()
-        return sample.detach()
+        n_batches = n_samples // batchsize_sampling
+        list_samples = []
+        samples = self.diffusion.sample((n_samples % batchsize_sampling))
+        list_samples.append(samples)
+        for batch in tqdm(range(n_batches), desc='Generation loop'):
+            samples = self.diffusion.sample(batchsize_sampling)
+            list_samples.append(samples)
 
+        samples = torch.vstack(list_samples)
+        self.diffusion.model.train()
+        return samples.detach()
+
+    @torch.inference_mode()
     def eval(self, train_loader, test_loader, gen_data_tensor):
         with torch.no_grad():
             metrics = {}
@@ -914,6 +928,7 @@ class DDPM():
         self.diffusion = GaussianDiffusion(
             self.denoising_model,
             image_size = self.dim,
-            timesteps = self.num_timesteps    # number of steps
-        )
+            timesteps = self.num_timesteps,
+            sampling_timesteps=self.sampling_timesteps).to(self.device)
+
         self.optimizer = torch.optim.AdamW(self.diffusion.model.parameters())

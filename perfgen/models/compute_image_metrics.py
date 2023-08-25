@@ -48,16 +48,18 @@ def kid_fid_precision_recall_score(
     test_feat = feature_extractor.get_all_features(test_dataset)
 
     # gen_feat = feature_extractor.get_gen_features(gen_data, size=10000)
-
-    gen_feat = feature_extractor.get_gen_features_from_data(
-        gen_data, size=10000)
+    gen_feat = feature_extractor.get_gen_features_from_tensor(
+        gen_data, batchsize=1024)
+    # gen_feat = feature_extractor.get_gen_features_from_data(
+    #     gen_data, size=10000)
 
     kid = KID().compute_metric(train_feat, test_feat, gen_feat)
     fid = FID().compute_metric(train_feat, test_feat, gen_feat)
     precision = PrecisionRecall(mode='Precision').compute_metric(
         train_feat, None, gen_feat)
-    recall = PrecisionRecall(mode='Recall').compute_metric(
-        train_feat, None, gen_feat)
+    # recall = PrecisionRecall(mode='Recall').compute_metric(
+    #     train_feat, None, gen_feat)
+    recall = 0
     return kid, fid, precision, recall
 
 @torch.inference_mode()

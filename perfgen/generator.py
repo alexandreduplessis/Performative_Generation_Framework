@@ -61,12 +61,12 @@ class Performative_Generator():
         self.eval_schedule = args.eval_schedule
         self.eval_data = args.eval_data
         self.checkpoint_freq = args.checkpoint_freq
-        self.checkpoint_nb_gen = args.checkpoint_nb_gen
+        self.n_gen_samples = args.n_gen_samples
         self.dump_path = args.dump_path
         self.cold_start = args.cold_start
         self.device = args.device
         self.save_gen_samples = args.save_gen_samples
-
+        self.batchsize_sampling = args.batchsize_sampling
 
 
     def train(self):
@@ -103,7 +103,9 @@ class Performative_Generator():
             # TODO put gen_gen on cpu directly ==>> no
             # TODO batch this operation
             gen_data = self.model.generate(
-                self.checkpoint_nb_gen, f"{self.dump_path}/generated_{i}.pt")
+                self.n_gen_samples,
+                batchsize_sampling = self.batchsize_sampling,
+                save_path = f"{self.dump_path}/generated_{i}.pt")
             # Evaluate the trained model
             self.eval_model(i, gen_data)
             self.plot_data(i, gen_data)
@@ -111,7 +113,7 @@ class Performative_Generator():
 
         # One last save
         self.model.save_model(f"{self.dump_path}/model_final")
-        gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.dump_path}/generated_final.pt")
+        gen_data = self.model.generate(self.n_gen_samples, f"{self.dump_path}/generated_final.pt")
 
         return metrics
 

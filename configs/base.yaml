@@ -5,7 +5,7 @@ n_samples: 5000
 prop_old: 0.
 exp_name: collapse
 checkpoint_freq: 1
-checkpoint_nb_gen: 1000
+n_gen_samples: 1000
 cold_start: False
 device: cpu
 last_run: False

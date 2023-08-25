@@ -61,7 +61,7 @@ run = wandb.init(
         "prop_old": args.prop_old,
         "nb_new": args.nb_new,
         "checkpoint_freq": args.checkpoint_freq,
-        "checkpoint_nb_gen": args.checkpoint_nb_gen,
+        "n_gen_samples": args.n_gen_samples,
         "exp_path": args.dump_path,
         "model": args.model,
         "cold_start": args.cold_start

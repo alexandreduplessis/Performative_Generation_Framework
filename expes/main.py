@@ -37,7 +37,7 @@ def main():
     info['prop_old'] = args.prop_old
     info['nb_new'] = args.nb_new
     info['checkpoint_freq'] = args.checkpoint_freq
-    info['checkpoint_nb_gen'] = args.checkpoint_nb_gen
+    info['n_gen_samples'] = args.n_gen_samples
     info['dump_path'] = args.dump_path
     info['model'] = args.model
     info['cold_start'] = args.cold_start
@@ -54,7 +54,9 @@ def main():
     elif args.model == 'simplediff':
         model = SimpleDiffusion(args.device)
     elif args.model == 'ddpm':
-        model = DDPM(args.device, args.dim, num_timesteps=args.num_timesteps)
+        model = DDPM(
+            args.device, args.dim, num_timesteps=args.num_timesteps,
+            sampling_timesteps=args.sampling_timesteps)
     else:
         raise NotImplementedError
 
@@ -67,7 +69,7 @@ def main():
             "prop_old": args.prop_old,
             "nb_new": args.nb_new,
             "checkpoint_freq": args.checkpoint_freq,
-            "checkpoint_nb_gen": args.checkpoint_nb_gen,
+            "n_gen_samples": args.n_gen_samples,
             "dump_path": args.dump_path,
             "model": args.model,
             "cold_start": args.cold_start
