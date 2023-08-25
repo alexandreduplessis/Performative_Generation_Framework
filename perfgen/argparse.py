@@ -4,7 +4,7 @@ import torch
 from omegaconf import OmegaConf
 
 
-def my_parser(path_to_yaml='configs/cifar.yaml'):
+def my_parser(path_to_yaml='configs/cifar_debug.yaml'):
     # def my_parser(path_to_yaml='configs/2D_toy_collapse.yaml'):
     yaml_config = OmegaConf.load(path_to_yaml)
     parser = generate_parser_from_dict(yaml_config)

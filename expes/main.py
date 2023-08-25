@@ -44,7 +44,6 @@ def main():
 
     np.save(args.dump_path + '/info.npy', info)
 
-    n_retrain = args.n_retrain
     if args.model == 'gmm':
         model = Gaussian_Mixture_Model(
             n_gaussians=50, dim=2, rng=rng)
@@ -55,7 +54,7 @@ def main():
     elif args.model == 'simplediff':
         model = SimpleDiffusion(args.device)
     elif args.model == 'ddpm':
-        model = DDPM(args.device, args.dim)
+        model = DDPM(args.device, args.dim, num_timesteps=args.num_timesteps)
     else:
         raise NotImplementedError
 
@@ -78,14 +77,14 @@ def main():
 
 
     # This is dirty: we should change it
+    n_retrain = args.n_retrain
     args.prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
     args.nb_new_schedule = [0] + [args.nb_new] * n_retrain
     args.eval_schedule = np.arange(0, n_retrain, 1)
     args.eval_data = None
 
 
-    performative_generator = Performative_Generator(
-        args, model=model, n_retrain=n_retrain)
+    performative_generator = Performative_Generator(args, model=model)
     metrics = performative_generator.train()
 
     np.save(args.dump_path + '/metrics.npy', metrics)

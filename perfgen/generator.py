@@ -39,8 +39,7 @@ class Performative_Generator():
         eval_datas : array
             Dataset on which to evaluate the model
     """
-    def __init__(
-        self, args, model, n_retrain):
+    def __init__(self, args, model):
         self.args = args
         self.model = model
         self.dataname = args.dataname
@@ -54,7 +53,7 @@ class Performative_Generator():
             self.init_data = torch.cat(
                 [data for data, _ in self.init_train_loader], dim=0)
 
-        self.n_retrain = n_retrain
+        self.n_retrain = args.n_retrain
         self.prop_old_schedule = args.prop_old_schedule
         self.nb_new_schedule = args.nb_new_schedule
         self.n_epochs = args.n_epochs
@@ -101,7 +100,7 @@ class Performative_Generator():
             # Train model
             self.model.train(train_loader, n_epochs)
             # Generate data
-            # TODO put gen_gen on cpu directly
+            # TODO put gen_gen on cpu directly ==>> no
             # TODO batch this operation
             gen_data = self.model.generate(
                 self.checkpoint_nb_gen, f"{self.dump_path}/generated_{i}.pt")

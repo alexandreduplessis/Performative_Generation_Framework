@@ -1,13 +1,12 @@
 model: ddpm
-n_epochs: 200
-n_finetune_epochs: 20
-n_retrain: 10
-num_timesteps: 1000
+n_epochs: 20
+n_finetune_epochs: 10
+n_retrain: 5
 n_samples: 5000
 prop_old: 0.
-exp_name: cifar
+exp_name: cifar_debug
 checkpoint_freq: 1
-checkpoint_nb_gen: 50000
+checkpoint_nb_gen: 1000
 cold_start: False
 last_run: False
 dataname: cifar
@@ -17,4 +16,5 @@ val_batchsize: 768
 nworkers: 1
 dim: 32
 save_gen_samples: False
-prototype: False
+num_timesteps: 5
+prototype: True

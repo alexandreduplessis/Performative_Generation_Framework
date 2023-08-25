@@ -850,7 +850,7 @@ class DDPM():
 
         optimizer = torch.optim.AdamW(self.diffusion.model.parameters())
         print("Training model...")
-        for epoch in range(num_epochs):
+        for epoch in tqdm(range(num_epochs)):
             self.diffusion.model.train()
             if epoch % 1 == 0:
                 print("Epoch %d " % (epoch))
