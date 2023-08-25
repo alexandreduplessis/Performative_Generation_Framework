@@ -99,51 +99,58 @@ class Performative_Generator():
                         gen_data.cpu())
                     n_epochs = self.n_finetune_epochs
 
-            # TODO merge checkpoint freq and eval schedule
             # Train model
-            losses = self.model.train(train_loader, n_epochs)
-            # Save model
+            self.model.train(train_loader, n_epochs)
+            # Generate data
+            gen_data = self.model.generate(
+                self.checkpoint_nb_gen,
+                f"{self.dump_path}/generated_{i}.pt")
+            # Evaluate the trained model
+            self.eval_model(i, gen_data)
+            self.plot_data(self, i, gen_data)
             if i % self.checkpoint_freq == 0:
-                self.model.save_model(
-                    f"{self.dump_path}/model_{i}")
-                gen_data = self.model.generate(
-                    self.checkpoint_nb_gen,
-                    f"{self.dump_path}/generated_{i}.pt")
-                if (self.dump_path is not None) and self.save_gen_samples:
-                    tot_dump_path = f"{self.dump_path}/generated_samples_{i}.pt"
-                    if self.dataname != "cifar":
-                        # generate
-                        # Save the generated samples
-                        torch.save(
-                            gen_data.detach().cpu(), tot_dump_path)
-                    else:
-                        save_image(
-                            gen_data[:128, :].cpu().float(),
-                            tot_dump_path, nrow=16,
-                            padding=2)
-                        images = wandb.Image(
-                            gen_data[:128, :],
-                            caption="Generated Data at retraining %i" %i)
-                        wandb.log({"Generated Data at retraining %i" %i: images})
+                self.save_model_and_data(i, gen_data)
 
-            if i in self.eval_schedule:
-                if self.dataname != "cifar":
-                    if ('Diff' in str(self.model)):
-                        plot_kde_density(
-                            self.init_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
-                    else:
-                        plt_density(self.model, plt_name=f"density_{i}.png")
-                    # Evaluate on eval_data
-                    new_metrics = self.model.eval(self.init_data)
-                # TODO uncomment
-                else:
-                    new_metrics = self.model.eval(
-                        self.init_train_loader, self.test_loader,
-                        gen_data.to('cpu'))
-                for keys in new_metrics.keys():
-                    wandb.log({"eval"+str(keys): new_metrics[keys]})
         # One last save
         self.model.save_model(f"{self.dump_path}/model_final")
         gen_data = self.model.generate(self.checkpoint_nb_gen, f"{self.dump_path}/generated_final.pt")
 
         return metrics
+
+
+    def eval_model(self, i, gen_data):
+        if self.dataname != "cifar":
+            metrics = self.model.eval(self.init_data)
+        else:
+            metrics = self.model.eval(
+                self.init_train_loader, self.test_loader, gen_data.to('cpu'))
+        for keys in metrics.keys():
+            wandb.log({"eval"+str(keys): metrics[keys]})
+
+    def save_model_and_data(self, i, gen_data):
+        self.model.save_model(
+            f"{self.dump_path}/model_{i}")
+        if (self.dump_path is not None) and self.save_gen_samples:
+            tot_dump_path = f"{self.dump_path}/generated_samples_{i}.pt"
+            if self.dataname != "cifar":
+                # Save the generated samples
+                torch.save(
+                    gen_data.detach().cpu(), tot_dump_path)
+            else:
+                save_image(
+                    gen_data[:128, :].cpu().float(),
+                    tot_dump_path, nrow=16,
+                    padding=2)
+
+    def plot_data(self, i, gen_data):
+        if self.dataname != "cifar":
+            if ('Diff' in str(self.model)):
+                plot_kde_density(
+                    self.init_data, gen_data.cpu().numpy(), plt_name=f"density_{i}.png")
+            else:
+                plt_density(self.model, plt_name=f"density_{i}.png")
+        else:
+            images = wandb.Image(
+                gen_data[:128, :],
+                caption="Generated Data at retraining %i" %i)
+            wandb.log({"Generated Data at retraining %i" %i: images})
