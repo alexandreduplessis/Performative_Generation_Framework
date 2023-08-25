@@ -138,7 +138,8 @@ class Performative_Generator():
                 # TODO uncomment
                 else:
                     new_metrics = self.model.eval(
-                        self.init_train_loader, self.test_loader, gen_data)
+                        self.init_train_loader, self.test_loader,
+                        gen_data.to('cpu'))
                 for keys in new_metrics.keys():
                     wandb.log({"eval"+str(keys): new_metrics[keys]})
         # One last save

@@ -855,13 +855,9 @@ class DDPM():
             if epoch % 1 == 0:
                 print("Epoch %d " % (epoch))
             for i, x in enumerate(train_loader):
-                # if len(x) == 2:
                 x = x[0]
-                # else:
-                #     import ipdb; ipdb.set_trace()
                 optimizer.zero_grad()
                 batch = x.to(self.device)
-                # batch = batch.view(-1, 1 ,1 , 2)
                 loss = self.diffusion(batch)
                 if not torch.isnan(loss) and not torch.isinf(loss):
                     loss.backward()
@@ -884,15 +880,17 @@ class DDPM():
         self.diffusion.model.train()
         return sample.detach()
 
-    def eval(self, train_loader, test_loader, gen_data):
+    def eval(self, train_loader, test_loader, gen_data_tensor):
         with torch.no_grad():
             metrics = {}
-            train_data = train_loader.dataset
-            test_data = test_loader.dataset
-            metrics['FLS']  = fls_score(train_data, test_data, gen_data)
+            train_dataset = train_loader.dataset
+            test_dataset = test_loader.dataset
+            gen_dataset = torch.utils.data.TensorDataset(gen_data_tensor)
+            # metrics['FLS']  = fls_score(
+            #     train_dataset, test_dataset, gen_data_tensor.cpu().detach())
             metrics['KID'], metrics['FID'], metrics['Precision'], metrics['Recall']  = kid_fid_precision_recall_score(
-                train_data, test_data, torch.utils.data.TensorDataset(gen_data))
-
+                train_dataset, test_dataset, gen_data_tensor.cpu().detach())
+        return metrics
 
 
 

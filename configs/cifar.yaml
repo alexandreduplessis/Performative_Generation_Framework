@@ -1,7 +1,7 @@
 model: ddpm
 n_epochs: 2
 n_finetune_epochs: 2
-n_retrain: 25
+n_retrain: 5
 n_samples: 5000
 prop_old: 0.
 exp_name: cifar

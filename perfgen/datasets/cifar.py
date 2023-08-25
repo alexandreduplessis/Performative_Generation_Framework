@@ -21,7 +21,6 @@ from torchvision import datasets
 from perfgen.utils import mix_data
 
 def cifar_mix_dataloader(args, true_data, gen_data, random_state=0):
-    # import ipdb; ipdb.set_trace()
     new_data = mix_data(true_data, gen_data, random_state=random_state)
     new_train_dataset = torch.utils.data.TensorDataset(new_data)
     new_train_loader = torch.utils.data.DataLoader(

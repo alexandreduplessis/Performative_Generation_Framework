@@ -14,18 +14,19 @@ def fls_score(train_dataset, test_dataset, gen_data, dataset_constant=1.322,
               train_dataset_name="CIFAR10_train", test_dataset_name="CIFAR10_test"):
 
     # Save path determines where features are cached (useful for train/test sets)
-    # import ipdb; ipdb.set_trace()
     feature_extractor = DINOv2FeatureExtractor(save_path="data/features")
-    import ipdb; ipdb.set_trace()
 
     # FLS needs 3 sets of samples: train, test and generated
     train_dataset.name = train_dataset_name
     test_dataset.name = test_dataset_name
+    # test_dataset.name = test_dataset_name
 
     train_feat = feature_extractor.get_all_features(train_dataset)
     test_feat = feature_extractor.get_all_features(test_dataset)
 
-    gen_feat = feature_extractor.get_gen_features(gen_data, size=10000)
+    gen_feat = feature_extractor.get_gen_features_from_data(
+        gen_data, size=10000)
+    # gen_feat = feature_extractor.get_gen_features(gen_data, size=10000)
 
     # 1.322 is a dataset specific constant
     fls = FLS("", dataset_constant).compute_metric(train_feat, test_feat, gen_feat)
@@ -46,12 +47,17 @@ def kid_fid_precision_recall_score(
     train_feat = feature_extractor.get_all_features(train_dataset)
     test_feat = feature_extractor.get_all_features(test_dataset)
 
-    gen_feat = feature_extractor.get_gen_features(gen_data, size=10000)
+    # gen_feat = feature_extractor.get_gen_features(gen_data, size=10000)
 
-    kid = KID("",).compute_metric(train_feat, test_feat, gen_feat)
-    fid = FID("",).compute_metric(train_feat, test_feat, gen_feat)
-    precision = PrecisionRecall("", mode='Precision').compute_metric(train_feat, None, gen_feat)
-    recall = PrecisionRecall("", mode='Recall').compute_metric(train_feat, None, gen_feat)
+    gen_feat = feature_extractor.get_gen_features_from_data(
+        gen_data, size=10000)
+
+    kid = KID().compute_metric(train_feat, test_feat, gen_feat)
+    fid = FID().compute_metric(train_feat, test_feat, gen_feat)
+    precision = PrecisionRecall(mode='Precision').compute_metric(
+        train_feat, None, gen_feat)
+    recall = PrecisionRecall(mode='Recall').compute_metric(
+        train_feat, None, gen_feat)
     return kid, fid, precision, recall
 
 @torch.inference_mode()
