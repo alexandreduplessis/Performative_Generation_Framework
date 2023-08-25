@@ -30,6 +30,8 @@ def main():
     info = {}
     info['date'] = date_str
     info['n_retrain'] = args.n_retrain
+    info['n_epochs'] = args.n_epochs
+    info['n_finetune_epochs'] = args.n_finetune_epochs
     info['n_samples'] = args.n_samples
     info['data'] = args.dataname
     info['prop_old'] = args.prop_old
@@ -79,7 +81,6 @@ def main():
     args.prop_old_schedule = np.array([1.] + [args.prop_old] * n_retrain)
     args.nb_new_schedule = [0] + [args.nb_new] * n_retrain
     args.eval_schedule = np.arange(0, n_retrain, 1)
-    args.epochs_schedule = [args.n_epochs] * n_retrain
     args.eval_data = None
 
 

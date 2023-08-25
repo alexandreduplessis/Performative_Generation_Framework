@@ -1,9 +1,10 @@
 model: ddpm
-n_epochs: 40
-n_retrain: 25
+n_epochs: 2
+n_finetune_epochs: 2
+n_retrain: 5
 n_samples: 5000
 prop_old: 0.
-exp_name: collapse
+exp_name: cifar
 checkpoint_freq: 1
 checkpoint_nb_gen: 1000
 cold_start: False
@@ -11,9 +12,8 @@ device: cpu
 last_run: False
 dataname: cifar
 nb_new: -1
-batchsize: 128
-val_batchsize: 128
-dataroot: "/network/datasets/cifar10.var/cifar10_torchvision/"
+batchsize: 768
+val_batchsize: 768
 nworkers: 1
 dim: 32
 save_gen_samples: False

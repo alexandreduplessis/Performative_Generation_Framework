@@ -21,7 +21,6 @@ from torchvision import datasets
 from perfgen.utils import mix_data
 
 def cifar_mix_dataloader(args, true_data, gen_data, random_state=0):
-    # train_loader, test_loader = cifar_dataloader(args)
     new_data = mix_data(true_data, gen_data, random_state=random_state)
     new_train_dataset = torch.utils.data.TensorDataset(new_data)
     new_train_loader = torch.utils.data.DataLoader(
@@ -31,7 +30,9 @@ def cifar_mix_dataloader(args, true_data, gen_data, random_state=0):
         num_workers=args.nworkers)
     return new_train_loader
 
-def cifar_dataloader(args):
+def cifar_dataloader(
+        args, prototype=True,
+        dataroot="/network/datasets/cifar10.var/cifar10_torchvision/"):
     transform_train = transforms.Compose([
         # transforms.Resize(args.imagesize),
         transforms.RandomHorizontalFlip(),
@@ -43,17 +44,21 @@ def cifar_dataloader(args):
         transforms.ToTensor(),
         # add_noise,
     ])
+    train_dataset = datasets.CIFAR10(
+        dataroot, train=True, transform=transform_train, download=False)
+    # TODO adapt
+    if prototype:
+        idx = list(range(0, 1000))
+        train_dataset= torch.utils.data.Subset(train_dataset, idx)
     train_loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(
-            args.dataroot, train=True, transform=transform_train,
-            download=False),
+        train_dataset,  # For debuging
         batch_size=args.batchsize,
         shuffle=True,
         num_workers=args.nworkers,
     )
     test_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10(
-            args.dataroot, train=False, transform=transform_test,
+            dataroot, train=False, transform=transform_test,
             download=False),
         batch_size=args.val_batchsize,
         shuffle=False,
