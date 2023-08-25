@@ -10,7 +10,7 @@ from perfgen.datasets.toy_data import sample_2d_data
 from perfgen.datasets.cifar import cifar_mix_dataloader, cifar_dataloader
 
 from torchvision.utils import save_image
-
+from einops import rearrange
 
 class Performative_Generator():
     """
@@ -81,7 +81,6 @@ class Performative_Generator():
             nb_new = self.nb_new_schedule[i]
             if self.dataname != "cifar":
                 # Generate data to train
-                # TODO encapsulate this in function
                 nb_old = int(self.prop_old_schedule[i] * self.data.shape[0])
                 train_loader = mix_data(
                     self.init_data[:nb_old],
@@ -102,14 +101,14 @@ class Performative_Generator():
             # Train model
             self.model.train(train_loader, n_epochs)
             # Generate data
+            # TODO put gen_gen on cpu directly
+            # TODO batch this operation
             gen_data = self.model.generate(
-                self.checkpoint_nb_gen,
-                f"{self.dump_path}/generated_{i}.pt")
+                self.checkpoint_nb_gen, f"{self.dump_path}/generated_{i}.pt")
             # Evaluate the trained model
             self.eval_model(i, gen_data)
-            self.plot_data(self, i, gen_data)
-            if i % self.checkpoint_freq == 0:
-                self.save_model_and_data(i, gen_data)
+            self.plot_data(i, gen_data)
+            self.save_model_and_data(i, gen_data)
 
         # One last save
         self.model.save_model(f"{self.dump_path}/model_final")
@@ -128,19 +127,20 @@ class Performative_Generator():
             wandb.log({"eval"+str(keys): metrics[keys]})
 
     def save_model_and_data(self, i, gen_data):
-        self.model.save_model(
-            f"{self.dump_path}/model_{i}")
-        if (self.dump_path is not None) and self.save_gen_samples:
-            tot_dump_path = f"{self.dump_path}/generated_samples_{i}.pt"
-            if self.dataname != "cifar":
-                # Save the generated samples
-                torch.save(
-                    gen_data.detach().cpu(), tot_dump_path)
-            else:
-                save_image(
-                    gen_data[:128, :].cpu().float(),
-                    tot_dump_path, nrow=16,
-                    padding=2)
+        if i % self.checkpoint_freq == 0:
+            self.model.save_model(
+                f"{self.dump_path}/model_{i}")
+            if (self.dump_path is not None) and self.save_gen_samples:
+                tot_dump_path = f"{self.dump_path}/generated_samples_{i}.pt"
+                if self.dataname != "cifar":
+                    # Save the generated samples
+                    torch.save(
+                        gen_data.detach().cpu(), tot_dump_path)
+                else:
+                    pass
+                    # TODO save by batch the samples
+
+
 
     def plot_data(self, i, gen_data):
         if self.dataname != "cifar":
@@ -150,7 +150,8 @@ class Performative_Generator():
             else:
                 plt_density(self.model, plt_name=f"density_{i}.png")
         else:
-            images = wandb.Image(
-                gen_data[:128, :],
-                caption="Generated Data at retraining %i" %i)
-            wandb.log({"Generated Data at retraining %i" %i: images})
+            tot_dump_path = f"{self.dump_path}/generated_samples_{i}.jpg"
+            save_image(
+                gen_data[:128, :].cpu().float(),
+                tot_dump_path, nrow=16, padding=2)
+            wandb.log({"Generated Data at retraining %i" %i: wandb.Image(tot_dump_path)})
