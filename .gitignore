@@ -1,3 +1,4 @@
+results/
 __pycache__
 README.md
 perfgen.egg-info/dependency_links.txt
@@ -10,3 +11,7 @@ checkpoints/*
 test.ipynb
 wandb
 runs/*
+env/
+synthetic_experiments/results/
+*.pt
+.vscode/

@@ -3,25 +3,27 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-
-from utils import wasserstein_distance
+from utils import wasserstein_distance, plot_data
 from models.bnaf import BNAFlow
 
+DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 RESULTS_PATH = "results"
 
-class PerfGen:
+class PerfGenExperiment:
     model_name = ""
-    model = None
-
     eval_fn = wasserstein_distance
 
     n_gen_samples = 1000
     n_retrain = 10
 
-    def __init__(self, dataset_name, train_data, prop_gen) -> None:
+    def __init__(self, model, dataset_name, train_data, prop_gen) -> None:
+        self.model = model
         self.dataset_name = dataset_name
         self.train_data = train_data
         self.prop_gen = prop_gen
+
+        self.gen_datas = []
+        self.evals = []
 
     def get_name(self):
         return f"{self.model_name}_{self.dataset_name}_{self.prop_gen}"
@@ -52,6 +54,7 @@ class PerfGen:
             # Generate data and evaluate
             gen_data = self.generate(self.n_gen_samples)
             # eval_res = self.eval_fn(gen_data)
+            self.gen_datas.append(gen_data)
             torch.save(gen_data, os.path.join(experiment_path, str(iter), "data.pt"))
             # torch.save(eval_res, os.path.join(experiment_path, str(iter), "eval.pt"))
 
@@ -61,9 +64,12 @@ class PerfGen:
             print(f"Training on {len(mixed_data)} samples.")  
             self.train(mixed_data)
 
-class BNAFPerfGen(PerfGen):
+            # Display iter results
+            print(f"Retrain {iter}")
+            plot_data(self.train_data, gen_data)
+
+class BNAFPerfGenExperiment(PerfGenExperiment):
     model_name = "BNAF"
-    model = BNAFlow()
 
     def generate(self, n_samples):
         return self.model.generate(n_samples)

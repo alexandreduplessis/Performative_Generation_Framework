@@ -5,6 +5,7 @@ from tqdm import tqdm
 # from perfgen.utils import wasserstein_distance
 import torch
 import wandb
+import matplotlib.pyplot as plt
 from torch import nn
 from torch import optim
 
@@ -72,6 +73,7 @@ class BNAFlow():
                 optimizer.zero_grad()
                 scheduler.step(loss)
         self.losses = torch.tensor(self.losses)
+        plt.plot(self.losses.numpy())
         self.flow.to('cpu')
         return self.losses
 
