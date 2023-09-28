@@ -22,11 +22,11 @@ true_samples = sample_2d_data('8gaussians', 5_000, rng)
 
 
 configure_plt()
-n_retrains = [0, 10, 50, 500]
+n_retrains = [0, 10, 20, 100]
 # n_retrains = [0, 10, 20, 50]
 n_subplots = len(n_retrains)
 
-fontsize= 18
+fontsize= 23
 fig, axs = plt.subplots(2, n_subplots + 1, figsize=(12, 4), sharey=True, sharex=True)
 
 
@@ -50,8 +50,8 @@ for idx_ax, n_retrain in enumerate(n_retrains):
         dump_path_stable + '/generated_samples_%i.pt' % n_retrain)
     plot_kde_density_ax(axs[1, idx_ax + 1], gen_samples)
 
-axs[0, 0].set_ylabel('Full \n Replacement', fontsize=fontsize)
-axs[1, 0].set_ylabel('Partial \n Replacement', fontsize=fontsize)
+axs[0, 0].set_ylabel('Collapsing', fontsize=fontsize)
+axs[1, 0].set_ylabel('Stability', fontsize=fontsize)
 
 
 
