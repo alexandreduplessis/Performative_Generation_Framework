@@ -2,8 +2,8 @@ model: ddpm
 n_epochs: 1
 n_finetune_epochs: 1
 n_retrain: 5
-num_timesteps: 10
-sampling_timesteps: 3
+num_timesteps: 1000
+sampling_timesteps: 50
 n_samples: 5000
 prop_old: 0.
 exp_name: cifar_debug
@@ -20,3 +20,4 @@ nworkers: 1
 dim: 32
 save_gen_samples: False
 prototype: False
+use_ddim: True  # Idk if this is used

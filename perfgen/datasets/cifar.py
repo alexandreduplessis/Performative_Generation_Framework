@@ -40,11 +40,12 @@ def cifar_dataloader(
         # transforms.Resize(args.imagesize),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        # add_noise,
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     transform_test = transforms.Compose([
         # transforms.Resize(args.imagesize),
         transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         # add_noise,
     ])
     train_dataset = datasets.CIFAR10(

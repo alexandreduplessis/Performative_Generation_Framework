@@ -10,7 +10,6 @@ from perfgen.models.ddpm import GaussianDiffusion
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
-import ipdb
 
 # Code taken from https://github.com/tanelp/tiny-diffusion/tree/master
 class SinusoidalEmbedding(nn.Module):

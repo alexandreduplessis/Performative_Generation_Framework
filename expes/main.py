@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 from perfgen.models.gmm import Gaussian_Mixture_Model
 from perfgen.models.flow import Normalizing_Flow
 from perfgen.models.simple_diffusion import SimpleDiffusion
-from perfgen.models.ddpm import DDPM
+from perfgen.models.new_ddpm import DDPM
 from perfgen.generator import Performative_Generator
 from perfgen.models.bnaf import BNAFlow
 from perfgen.argparse import my_parser
@@ -55,8 +55,8 @@ def main():
         model = SimpleDiffusion(args.device)
     elif args.model == 'ddpm':
         model = DDPM(
-            args.device, args.dim, num_timesteps=args.num_timesteps,
-            sampling_timesteps=args.sampling_timesteps)
+            train_device=args.device, eval_device=args.device,
+            use_ddim=args.use_ddim, sampling_timesteps=args.sampling_timesteps)
     else:
         raise NotImplementedError
 

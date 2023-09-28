@@ -7,7 +7,6 @@ from fls.metrics.FLS import FLS
 from fls.metrics.KID import KID
 from fls.metrics.FID import FID
 from fls.metrics.PrecisionRecall import PrecisionRecall
-import ipdb
 
 @torch.inference_mode()
 def fls_score(train_dataset, test_dataset, gen_data, dataset_constant=1.322,

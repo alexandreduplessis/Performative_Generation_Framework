@@ -1,11 +1,11 @@
 model: ddpm
 n_epochs: 200
 n_finetune_epochs: 20
-n_retrain: 10
+n_retrain: 5
 num_timesteps: 1000
-sampling_timesteps: 250
+sampling_timesteps: 200  # bottelneck step
 n_samples: 5000
-prop_old: 0.
+prop_old: 0.7
 exp_name: cifar
 checkpoint_freq: 1
 n_gen_samples: 50000
@@ -14,9 +14,10 @@ last_run: False
 dataname: cifar
 nb_new: -1
 batchsize: 768
-batchsize_sampling: 4096
+batchsize_sampling: 2048
 val_batchsize: 768
-nworkers: 8
+nworkers: 1
 dim: 32
 save_gen_samples: False
 prototype: False
+use_ddim: True  # Idk if this is used

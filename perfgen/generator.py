@@ -98,7 +98,7 @@ class Performative_Generator():
                     n_epochs = self.n_finetune_epochs
 
             # Train model
-            self.model.train(train_loader, n_epochs)
+            self.model.train(train_loader, n_epochs=n_epochs)
             # Generate data
             # TODO put gen_gen on cpu directly ==>> no
             # TODO batch this operation
@@ -112,8 +112,9 @@ class Performative_Generator():
             self.save_model_and_data(i, gen_data)
 
         # One last save
-        self.model.save_model(f"{self.dump_path}/model_final")
-        gen_data = self.model.generate(self.n_gen_samples, f"{self.dump_path}/generated_final.pt")
+        # self.model.save_model(self.n_retrain, f"{self.dump_path}/model_final")
+        # gen_data = self.model.generate(
+        #     self.n_gen_samples, f"{self.dump_path}/generated_final.pt")
 
         return metrics
 

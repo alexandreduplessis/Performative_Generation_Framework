@@ -24,7 +24,6 @@ from tqdm.auto import tqdm
 from ema_pytorch import EMA
 
 from accelerate import Accelerator
-import ipdb
 from perfgen.models.attend import Attend
 from perfgen.models.compute_image_metrics import (
     fls_score, kid_fid_precision_recall_score)
@@ -883,11 +882,11 @@ class DDPM():
         self.diffusion.model.eval()
         n_batches = n_samples // batchsize_sampling
         list_samples = []
-        samples = self.diffusion.sample((n_samples % batchsize_sampling))
-        list_samples.append(samples)
         for batch in tqdm(range(n_batches), desc='Generation loop'):
             samples = self.diffusion.sample(batchsize_sampling)
             list_samples.append(samples)
+        samples = self.diffusion.sample((n_samples % batchsize_sampling))
+        list_samples.append(samples)
 
         samples = torch.vstack(list_samples)
         self.diffusion.model.train()
