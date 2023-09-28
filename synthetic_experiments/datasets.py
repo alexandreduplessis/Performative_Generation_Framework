@@ -22,7 +22,7 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
 
         dataset = []
         for i in range(n_samples):
-            point = rng.randn(2) * 0.5
+            point = rng.randn(2) * 0.25
             idx = rng.randint(8)
             center = centers[idx]
             point[0] += center[0]

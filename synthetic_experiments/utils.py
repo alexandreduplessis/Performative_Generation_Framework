@@ -4,6 +4,8 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
+DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+
 
 def wasserstein_distance(data1, data2):
     """
@@ -31,6 +33,7 @@ def wasserstein_distance(data1, data2):
 
 
 def plot_density(train_data, flow):
+    train_data = train_data.cpu()
     x_min, x_max = train_data[:, 0].min(), train_data[:, 0].max()
     y_min, y_max = train_data[:, 1].min(), train_data[:, 1].max()
 
@@ -41,18 +44,18 @@ def plot_density(train_data, flow):
     xline = torch.linspace(x_min, x_max, steps=num_steps)
     yline = torch.linspace(y_min, y_max, steps=num_steps)
     xgrid, ygrid = torch.meshgrid(xline, yline)
-    xyinput = torch.cat([xgrid.reshape(-1, 1), ygrid.reshape(-1, 1)], dim=1)
+    xyinput = torch.cat([xgrid.reshape(-1, 1), ygrid.reshape(-1, 1)], dim=1).to(DEVICE)
 
     with torch.no_grad():
         zgrid = flow.log_prob(xyinput).exp().reshape(num_steps, num_steps)
 
-    plt.contourf(xgrid.numpy(), ygrid.numpy(), zgrid.numpy())
+    plt.pcolormesh(xgrid.numpy(), ygrid.numpy(), zgrid.cpu().numpy())
     plt.show()
 
 
 def plot_data(train_data, gen_data):
-    train_data = train_data.numpy()
-    gen_data = gen_data.numpy()
+    train_data = train_data.cpu().numpy()
+    gen_data = gen_data.cpu().numpy()
 
     plt.scatter(train_data[:, 0], train_data[:, 1], label="train", color="blue")
     plt.scatter(gen_data[:, 0], gen_data[:, 1], label="gen", color="red")

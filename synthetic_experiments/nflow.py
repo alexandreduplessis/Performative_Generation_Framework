@@ -12,10 +12,12 @@ from nflows.transforms.base import CompositeTransform
 from nflows.transforms.autoregressive import MaskedAffineAutoregressiveTransform
 from nflows.transforms.permutations import ReversePermutation
 
+DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+
 
 class MaskedAffineAutoregressiveFlowExperiment(PerfGenExperiment):
     model_name = "MaskedAffineAutoregressiveFlow"
-    n_train_iter = 5000
+    n_train_iter = 2500
     n_gen_samples = 1000
 
     def initialize_model(self):
@@ -34,10 +36,10 @@ class MaskedAffineAutoregressiveFlowExperiment(PerfGenExperiment):
             )
         transform = CompositeTransform(transforms)
 
-        self.model = Flow(transform, base_dist)
+        self.model = Flow(transform, base_dist).to(DEVICE)
         self.optim = optim.Adam(self.model.parameters())
 
-        self.train(self.train_data, 25000)
+        self.train(self.train_data, 5000)
         torch.save((self.model, self.optim), self.get_model_path())
 
         print(f"Finished training. Samples look like:")
