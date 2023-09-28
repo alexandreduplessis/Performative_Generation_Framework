@@ -4,13 +4,20 @@ import math
 import numpy as np
 from sklearn.utils import check_random_state
 
-def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
 
+def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
     if dataset == "8gaussians":
-        scale = 4.
-        centers = [(1, 0), (-1, 0), (0, 1), (0, -1), (1. / np.sqrt(2), 1. / np.sqrt(2)),
-                   (1. / np.sqrt(2), -1. / np.sqrt(2)), (-1. / np.sqrt(2),
-                                                         1. / np.sqrt(2)), (-1. / np.sqrt(2), -1. / np.sqrt(2))]
+        scale = 4.0
+        centers = [
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1),
+            (1.0 / np.sqrt(2), 1.0 / np.sqrt(2)),
+            (1.0 / np.sqrt(2), -1.0 / np.sqrt(2)),
+            (-1.0 / np.sqrt(2), 1.0 / np.sqrt(2)),
+            (-1.0 / np.sqrt(2), -1.0 / np.sqrt(2)),
+        ]
         centers = [(scale * x, scale * y) for x, y in centers]
 
         dataset = []
@@ -26,13 +33,18 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         dataset = torch.from_numpy(dataset)
         return dataset
 
-    elif dataset == '2spirals':
+    elif dataset == "2spirals":
         n = torch.sqrt(torch.rand(n_samples // 2)) * 540 * (2 * math.pi) / 360
-        d1x = - torch.cos(n) * n + torch.rand(n_samples // 2) * 0.5
-        d1y =   torch.sin(n) * n + torch.rand(n_samples // 2) * 0.5
-        x = torch.cat([torch.stack([ d1x,  d1y], dim=1),
-                       torch.stack([-d1x, -d1y], dim=1)], dim=0) / 3
-        dataset = x + 0.1*z
+        d1x = -torch.cos(n) * n + torch.rand(n_samples // 2) * 0.5
+        d1y = torch.sin(n) * n + torch.rand(n_samples // 2) * 0.5
+        x = (
+            torch.cat(
+                [torch.stack([d1x, d1y], dim=1), torch.stack([-d1x, -d1y], dim=1)],
+                dim=0,
+            )
+            / 3
+        )
+        dataset = x + 0.1 * z
         return dataset.cpu().numpy()
 
     elif dataset == "pinwheel":
@@ -43,29 +55,35 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         rate = 0.25
         rads = np.linspace(0, 2 * np.pi, num_classes, endpoint=False)
 
-        features = rng.randn(num_classes*num_per_class, 2) \
-            * np.array([radial_std, tangential_std])
-        features[:, 0] += 1.
+        features = rng.randn(num_classes * num_per_class, 2) * np.array(
+            [radial_std, tangential_std]
+        )
+        features[:, 0] += 1.0
         labels = np.repeat(np.arange(num_classes), num_per_class)
 
         angles = rads[labels] + rate * np.exp(features[:, 0])
-        rotations = np.stack([np.cos(angles), -np.sin(angles), np.sin(angles), np.cos(angles)])
+        rotations = np.stack(
+            [np.cos(angles), -np.sin(angles), np.sin(angles), np.cos(angles)]
+        )
         rotations = np.reshape(rotations.T, (-1, 2, 2))
 
         data = 2 * rng.permutation(np.einsum("ti,tij->tj", features, rotations))
         # return torch.from_numpy(data)
         return data
 
-    elif dataset == '1gaussian':
+    elif dataset == "1gaussian":
         return torch.randn(n_samples, 2)
 
-    elif dataset == 'checkerboard':
+    elif dataset == "checkerboard":
         x1 = torch.rand(n_samples) * 4 - 2
-        x2_ = torch.rand(n_samples) - torch.randint(0, 2, (n_samples,), dtype=torch.float) * 2
+        x2_ = (
+            torch.rand(n_samples)
+            - torch.randint(0, 2, (n_samples,), dtype=torch.float) * 2
+        )
         x2 = x2_ + x1.floor() % 2
         return torch.stack([x1, x2], dim=1) * 2
 
-    elif dataset == 'rings':
+    elif dataset == "rings":
         n_samples4 = n_samples3 = n_samples2 = n_samples // 4
         n_samples1 = n_samples - n_samples4 - n_samples3 - n_samples2
 
@@ -84,16 +102,26 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         circ1_x = torch.cos(linspace1) * 0.25
         circ1_y = torch.sin(linspace1) * 0.25
 
-        x = torch.stack([torch.cat([circ4_x, circ3_x, circ2_x, circ1_x]),
-                         torch.cat([circ4_y, circ3_y, circ2_y, circ1_y])], dim=1) * 3.0
+        x = (
+            torch.stack(
+                [
+                    torch.cat([circ4_x, circ3_x, circ2_x, circ1_x]),
+                    torch.cat([circ4_y, circ3_y, circ2_y, circ1_y]),
+                ],
+                dim=1,
+            )
+            * 3.0
+        )
 
         # random sample
         x = x[torch.randint(0, n_samples, size=(n_samples,))]
         # Add noise
-        dataset = x + torch.normal(mean=torch.zeros_like(x), std=0.08*torch.ones_like(x))
+        dataset = x + torch.normal(
+            mean=torch.zeros_like(x), std=0.08 * torch.ones_like(x)
+        )
         return dataset.cpu().numpy()
 
-    elif dataset == 'swissroll':
+    elif dataset == "swissroll":
         data = sklearn.datasets.make_swiss_roll(n_samples=n_samples, noise=1.0)[0]
         data = data.astype("float32")[:, [0, 2]]
         data /= 5
@@ -101,7 +129,9 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         return data
 
     elif dataset == "circles":
-        data = sklearn.datasets.make_circles(n_samples=n_samples, factor=.5, noise=0.08)[0]
+        data = sklearn.datasets.make_circles(
+            n_samples=n_samples, factor=0.5, noise=0.08
+        )[0]
         data = data.astype("float32")
         data *= 3
         data = torch.from_numpy(data)
@@ -115,13 +145,16 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         rate = 0.25
         rads = np.linspace(0, 2 * np.pi, num_classes, endpoint=False)
 
-        features = rng.randn(num_classes*num_per_class, 2) \
-            * np.array([radial_std, tangential_std])
-        features[:, 0] += 1.
+        features = rng.randn(num_classes * num_per_class, 2) * np.array(
+            [radial_std, tangential_std]
+        )
+        features[:, 0] += 1.0
         labels = np.repeat(np.arange(num_classes), num_per_class)
 
         angles = rads[labels] + rate * np.exp(features[:, 0])
-        rotations = np.stack([np.cos(angles), -np.sin(angles), np.sin(angles), np.cos(angles)])
+        rotations = np.stack(
+            [np.cos(angles), -np.sin(angles), np.sin(angles), np.cos(angles)]
+        )
         rotations = np.reshape(rotations.T, (-1, 2, 2))
 
         data = 2 * rng.permutation(np.einsum("ti,tij->tj", features, rotations))
@@ -138,4 +171,4 @@ def sample_2d_data(dataset, n_samples, rng=check_random_state(0)):
         return np.stack((x, y), 1)
 
     else:
-        raise RuntimeError('Invalid `dataset` to sample from.')
+        raise RuntimeError("Invalid `dataset` to sample from.")

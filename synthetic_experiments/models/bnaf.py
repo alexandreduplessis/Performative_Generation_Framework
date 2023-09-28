@@ -2,6 +2,7 @@ import torch
 import math
 import numpy as np
 from tqdm import tqdm
+
 # from perfgen.utils import wasserstein_distance
 import torch
 import wandb
@@ -10,26 +11,23 @@ from torch import nn
 from torch import optim
 
 
-class BNAFlow():
+class BNAFlow:
     """
     Block Neural Autoregressive Normalizing Flow
     """
-    def __init__(
-            self, device='cpu'):
 
+    def __init__(self, device="cpu"):
+        self.device = device
         self.n_flows = 1
         self.hidden_dim = 50
-        self.device = device
-        self.n_layers = 3
-        self.batch_size = 128
+        self.n_layers = 2
+        self.batch_size = 256
+        self.max_gradient_norm = 0.1
 
         self.flow = create_model(self.n_flows, self.hidden_dim, self.n_layers)
 
         self.losses = []
         self.name = "BNAF"
-        self.metrics_titles = {'oldmean': 'Mean error', 'oldstd': 'Standard deviation error', 'oldwasserstein': 'Pseudo-Wasserstein distance',\
-                                    'evalmean': 'Mean error', 'evalstd': 'Standard deviation error', 'evalwasserstein': 'Pseudo-Wasserstein distance', 'nll': 'Negative Log-Likelihood'}
-        self.max_gradient_norm = 1
 
     def compute_log_p_x(self, x_mb):
         y_mb, log_diag_j_mb = self.flow(x_mb)
@@ -41,13 +39,13 @@ class BNAFlow():
         return log_p_y_mb + log_diag_j_mb
 
     def train(self, data, epochs=100):
-        dataloader = torch.utils.data.DataLoader(data, batch_size=self.batch_size, shuffle=True)
-        optimizer = torch.optim.Adam(
-            self.flow.parameters(), lr=1e-1, amsgrad=True
+        dataloader = torch.utils.data.DataLoader(
+            data, batch_size=self.batch_size, shuffle=True
         )
+        optimizer = torch.optim.Adam(self.flow.parameters(), lr=1e-1, amsgrad=True)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            factor=.5,
+            factor=0.5,
             patience=2000,
             min_lr=5e-4,
             verbose=True,
@@ -56,42 +54,62 @@ class BNAFlow():
         self.flow.to(self.device)
         self.losses = []
         for epoch in tqdm(range(epochs)):
-            loss_sum = 0
             for x in dataloader:
                 x = x.to(self.device)
                 loss = -self.compute_log_p_x(x).mean()
+
                 loss.backward()
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    self.flow.parameters(),
-                    self.max_gradient_norm)
-                loss_sum += loss.item()
-                if torch.isfinite(grad_norm):
-                    optimizer.step()
-                self.losses.append(loss_sum)
-                wandb.log({'loss': loss_sum})
+                torch.nn.utils.clip_grad_norm_(
+                    self.flow.parameters(), self.max_gradient_norm
+                )
+                self.losses.append(loss.item())
+
                 optimizer.step()
                 optimizer.zero_grad()
                 scheduler.step(loss)
-        self.losses = torch.tensor(self.losses)
-        plt.plot(self.losses.numpy())
-        self.flow.to('cpu')
+
+        plt.plot(self.losses)
+        plt.show()
         return self.losses
 
-
-    def generate(self, n_samples, save_path=None):
+    def generate(self, n_samples):
         with torch.no_grad():
-            if n_samples == 0:
-                return torch.tensor([])
             d_mb = torch.distributions.Normal(
-            torch.zeros((n_samples, 2)),
-            torch.ones((n_samples, 2)),
+                torch.zeros((n_samples, 2)),
+                torch.ones((n_samples, 2)),
             )
             y_mb = d_mb.sample()
             samples, log_diag_j_mb = self.flow(y_mb)
-            if save_path is not None:
-                # torch save
-                torch.save(samples, save_path)
         return samples
+
+    def plot_density(self, limit=4, step=0.01):
+        grid = torch.Tensor(
+            [
+                [a, b]
+                for a in np.arange(-limit, limit, step)
+                for b in np.arange(-limit, limit, step)
+            ]
+        )
+        grid_dataset = torch.utils.data.TensorDataset(grid.to(self.device))
+        grid_data_loader = torch.utils.data.DataLoader(
+            grid_dataset, batch_size=10000, shuffle=False
+        )
+
+        prob = torch.cat(
+            [
+                torch.exp(self.compute_log_p_x(x_mb)).detach()
+                for x_mb, in grid_data_loader
+            ],
+            0,
+        )
+
+        prob = prob.view(int(2 * limit / step), int(2 * limit / step)).t()
+
+        plt.figure(figsize=(12, 12))
+        plt.imshow(prob.cpu().data.numpy(), extent=(-limit, limit, -limit, limit))
+        plt.axis("off")
+        plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+        plt.show()
 
     def eval(self, data, **kwargs):
         with torch.no_grad():
@@ -99,9 +117,9 @@ class BNAFlow():
             # compute the std and mean of the data, taking weights into account
             data_gen = self.generate(len(data))
             model_std = torch.std(data_gen, dim=0)
-            metrics['std'] = torch.norm(model_std)
-            metrics['wasserstein'] = wasserstein_distance(data, data_gen)
-            metrics['nll'] = - self.log_prob(data).mean(axis=-1).detach().numpy()
+            metrics["std"] = torch.norm(model_std)
+            metrics["wasserstein"] = wasserstein_distance(data, data_gen)
+            metrics["nll"] = -self.log_prob(data).mean(axis=-1).detach().numpy()
             return metrics
 
     def log_prob(self, data):
@@ -116,8 +134,8 @@ class BNAFlow():
     def cold_start(self):
         raise NotImplementedError
 
-def create_model(n_flows, hidden_dim, n_layers):
 
+def create_model(n_flows, hidden_dim, n_layers):
     flows = []
     for f in range(n_flows):
         layers = []
@@ -142,6 +160,7 @@ def create_model(n_flows, hidden_dim, n_layers):
     model = Sequential(*flows)
 
     return model
+
 
 class BNAF(torch.nn.Sequential):
     """
@@ -203,6 +222,7 @@ class BNAF(torch.nn.Sequential):
 
     def _get_name(self):
         return "BNAF(res={})".format(self.res)
+
 
 class Sequential(torch.nn.Sequential):
     """
@@ -350,7 +370,7 @@ class MaskedWeight(torch.nn.Module):
 
         w = torch.exp(self._weight) * self.mask_d + self._weight * self.mask_o
 
-        w_squared_norm = (w ** 2).sum(-1, keepdim=True)
+        w_squared_norm = (w**2).sum(-1, keepdim=True)
 
         w = self._diag_weight.exp() * w / w_squared_norm.sqrt()
 
